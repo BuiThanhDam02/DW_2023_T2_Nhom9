@@ -1,3 +1,5 @@
+import Flows.Crawler;
+import Flows.Extract;
 import Models.News;
 import lombok.Data;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -24,9 +26,8 @@ import java.util.List;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-//        System.out.println(new Main().writeExcelFile());
-//        new Main().downloadImage("https://i1-vnexpress.vnecdn.net/2023/11/23/nguoi-di-cu-jpeg-1700738139-2858-1700739004.jpg?w=220&h=132&q=100&dpr=1&fit=crop&s=EEF5yKmhUBcyPAKPCtq7Lg");
-//        new Main().readExcelAndWriteSQL("D:\\.Student\\Nam4_HK1\\Data Warehouse\\DataUpdate\\news-20231126_002808.xls");
+//      new Crawler().excute();
+        new Extract().excute();
     }
 
 }
