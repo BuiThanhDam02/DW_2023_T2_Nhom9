@@ -1,30 +1,38 @@
 package Flows;
 
+import DAO.ControlDAO;
+import DatabaseConfig.JDBIConnector;
+import Models.Config;
+import PropertiesConfig.PropertiesConfig;
+import QueryConfig.ReadQuery;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.jdbi.v3.core.Jdbi;
 
 import java.io.*;
 import java.net.URL;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+
+import java.time.LocalDate;
 
 public class Extract {
-    String jdbcUrl = "jdbc:mysql://localhost:3306/datawarehouse";
-    String jdbcUsername = "root";
-    String jdbcPassword = "";
-    public void readExcelAndWriteSQL(String source) {
-        File file = new File(source);
-        System.out.println(file);
+    PropertiesConfig PPC ;
+    public Extract() {
+        this.PPC = new PropertiesConfig("path.properties");
+    }
+    public void readExcelAndWriteSQL() {
+
         try {
+            Config c = ControlDAO.getCurrentConfig();
+            Jdbi jdbi = JDBIConnector.get(c.getStagingSourceHost(),c.getStagingSourcePort(),c.getStagingDbName(),c.getStagingSourceUsername(),c.getStagingSourcePassword());
+            String csv_file_path = c.getDownloadPath()+"news.xls";
+            File file = new File(csv_file_path);
+            System.out.println(file);
+
             FileInputStream fis = new FileInputStream(file);
             Workbook workbook = new HSSFWorkbook(fis);
             Sheet sheet = workbook.getSheetAt(0);
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            Connection connection = DriverManager.getConnection(jdbcUrl, jdbcUsername, jdbcPassword);
             for (Row row: sheet) {
                 String title = row.getCell(1).getStringCellValue();
                 String url = row.getCell(2).getStringCellValue();
@@ -33,34 +41,43 @@ public class Extract {
                 String content = row.getCell(5).getStringCellValue();
                 String category = row.getCell(6).getStringCellValue();
                 String date = row.getCell(7).getStringCellValue();
-                String getFileName = file.getName();
-                String getDateFileName = getFileName.substring(getFileName.lastIndexOf('-') + 1, getFileName.lastIndexOf('_'));
 
-                String sql = "INSERT INTO staging(title, url, image_url, description, content, category, date, crawler_date, isDelete) " +
-                        "VALUES (?,?,?,?,?,?,?,?,0)";
-                PreparedStatement preparedStatement = connection.prepareStatement(sql);
-                preparedStatement.setString(1,title);
-                preparedStatement.setString(2,url);
-                if (downloadImage(image) == "") {
-                    preparedStatement.setString(3, image);
+                String staging_SQL_path = new PropertiesConfig("path.properties").getResource().get("staging_query_path");
+                String insert_query = ReadQuery.getInsertStatements(staging_SQL_path).get(0);
+
+                String fileImageName = downloadImage(image);
+                LocalDate currentDate = LocalDate.now();
+
+                // Lấy định dạng ngày, tháng, năm
+                String dayString = String.valueOf(currentDate.getDayOfMonth());
+                String monthString = String.valueOf(currentDate.getMonthValue());
+                String yearString = String.valueOf(currentDate.getYear());
+                String img_path =  this.PPC.getResource().get("output_D_path") +"\\"+this.PPC.getResource().get("public_path") +
+                        "\\"+this.PPC.getResource().get("img_path")+"\\";
+                if (fileImageName == "") {
+                    image = img_path+this.PPC.getResource().get("default_path")+"\\"+this.PPC.getResource().get("default_img_path");
                 } else {
-                    preparedStatement.setString(3, "/public/img/" + downloadImage(image));
+                  image =img_path+yearString+"\\"+monthString+"\\"+dayString+"\\" + fileImageName;
                 }
-                preparedStatement.setString(4,description);
-                preparedStatement.setString(5,content);
-                preparedStatement.setString(6,category);
-                if ((date.equals(""))) {
-                    preparedStatement.setString(7, null);
-                } else {
-                    preparedStatement.setString(7, date);
-                }
-//                preparedStatement.setString(7,date);
-                preparedStatement.setString(8, getDateFileName.substring(0, 4) + "/" + getDateFileName.substring(4, 6) + "/" + getDateFileName.substring(6, 8));
-                preparedStatement.executeUpdate();
+                String finalImage = image;
+                String crawlerDate = yearString+"-"+monthString+"-"+dayString;
+                jdbi.withHandle(h ->
+                        h.createUpdate(insert_query)
+                                .bind(0,title)
+                                .bind(1,url)
+                                .bind(2, finalImage)
+                                .bind(3,description)
+                                .bind(4,content)
+                                .bind(5,category)
+                                .bind(6,date)
+                                .bind(7,crawlerDate).execute()
+                );
+
 
             }
+            fis.close();
             System.out.println("access");
-        } catch (IOException | SQLException | ClassNotFoundException e) {
+        } catch (Exception  e) {
             throw new RuntimeException(e);
         }
     }
@@ -70,7 +87,16 @@ public class Extract {
         } else {
             URL url = new URL(imgUrl);
             InputStream inputStream = url.openStream();
-            File folder = new File("./src/main/java/public/img");
+            LocalDate currentDate = LocalDate.now();
+
+            // Lấy định dạng ngày, tháng, năm
+            String dayString = String.valueOf(currentDate.getDayOfMonth());
+            String monthString = String.valueOf(currentDate.getMonthValue());
+            String yearString = String.valueOf(currentDate.getYear());
+            String img_path =  this.PPC.getResource().get("output_D_path") +"\\"+this.PPC.getResource().get("public_path") +
+                    "\\"+this.PPC.getResource().get("img_path")+"\\";
+
+            File folder = new File(img_path+yearString+"\\"+monthString+"\\"+dayString+"\\");
             if (!folder.exists()) {
                 folder.mkdirs();
             }
@@ -89,5 +115,15 @@ public class Extract {
             }
             return fileName;
         }
+    }
+    public void excute(){
+        try {
+            System.out.println("Extracting in proccessing...");
+            readExcelAndWriteSQL();
+            System.out.println("Done!!");
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
     }
 }

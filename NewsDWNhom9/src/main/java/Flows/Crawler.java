@@ -121,7 +121,7 @@ public class Crawler {
             if (news.get(i).getDate() == null || news.get(i).getDate() == ""){
                 LocalDateTime currentDateTime = LocalDateTime.now();
 
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
                 String formattedDateTime = currentDateTime.format(formatter);
                 row.createCell(7).setCellValue(formattedDateTime);
