@@ -107,6 +107,12 @@ public class Crawler {
 
         String dir =  this.PPC.getResource().get("output_D_path") +"\\"+ this.PPC.getResource().get("data_path") + "\\"+this.PPC.getResource().get("crawler_data_path") +
                 "\\";
+        String filexsl = dir+"news.xls";
+        File xlsfile = new File(filexsl);
+        if (new File(filexsl).exists()){
+            xlsfile.delete();
+        }
+
         Workbook workbook = new HSSFWorkbook();
         Sheet sheet = workbook.createSheet("Data");
         for (int i = 0; i < news.size(); i++) {
@@ -159,7 +165,7 @@ public class Crawler {
         try {
             System.out.println("Crawling in proccessing...");
             writeExcelFile();
-            System.out.println("Done!!");
+            System.out.println("Done Crawling!!");
         }catch (Exception e){
             e.printStackTrace();
         }

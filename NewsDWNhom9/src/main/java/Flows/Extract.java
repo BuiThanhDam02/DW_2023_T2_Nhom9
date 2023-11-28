@@ -26,6 +26,15 @@ public class Extract {
         try {
             Config c = ControlDAO.getCurrentConfig();
             Jdbi jdbi = JDBIConnector.get(c.getStagingSourceHost(),c.getStagingSourcePort(),c.getStagingDbName(),c.getStagingSourceUsername(),c.getStagingSourcePassword());
+
+            String staging_SQL_path = new PropertiesConfig("path.properties").getResource().get("staging_query_path");
+            ReadQuery s_rq = new ReadQuery(staging_SQL_path);
+            String insert_query = s_rq.getInsertStatements().get(0);
+
+            String truncate_query =  s_rq.getTruncateStatements().get(0);
+            jdbi.withHandle(h ->
+                    h.createUpdate(truncate_query).execute()
+            );
             String csv_file_path = c.getDownloadPath()+"news.xls";
             File file = new File(csv_file_path);
             System.out.println(file);
@@ -42,8 +51,7 @@ public class Extract {
                 String category = row.getCell(6).getStringCellValue();
                 String date = row.getCell(7).getStringCellValue();
 
-                String staging_SQL_path = new PropertiesConfig("path.properties").getResource().get("staging_query_path");
-                String insert_query = ReadQuery.getInsertStatements(staging_SQL_path).get(0);
+
 
                 String fileImageName = downloadImage(image);
                 LocalDate currentDate = LocalDate.now();
@@ -120,7 +128,7 @@ public class Extract {
         try {
             System.out.println("Extracting in proccessing...");
             readExcelAndWriteSQL();
-            System.out.println("Done!!");
+            System.out.println("Done Extracting!!");
         }catch (Exception e){
             e.printStackTrace();
         }

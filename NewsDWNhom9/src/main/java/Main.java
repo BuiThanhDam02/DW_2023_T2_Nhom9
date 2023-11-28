@@ -1,33 +1,51 @@
 import Flows.Crawler;
 import Flows.Extract;
-import Models.News;
-import lombok.Data;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+import Flows.Transform;
 
-import java.io.*;
-import java.net.URL;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+
+import lombok.Data;
+
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 
 @Data
 public class Main {
 
-    public static void main(String[] args) throws IOException {
-//      new Crawler().excute();
-        new Extract().excute();
+    public static void main(String[] args)   {
+        // Số lượng luồng trong thread pool
+        int threadPoolSize = 1;
+
+        // Tạo một ScheduledExecutorService với số lượng luồng được xác định
+        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(threadPoolSize);
+
+        try {
+            // Crawler
+            CompletableFuture<Void> crawlerFuture = CompletableFuture.runAsync(() -> new Crawler().excute());
+
+            // Extract
+            CompletableFuture<Void> extractFuture = crawlerFuture.thenCompose(result ->
+                    CompletableFuture.runAsync(() -> new Extract().excute())
+            );
+
+            // Transform
+            CompletableFuture<Void> transformFuture = extractFuture.thenRun(() -> {
+                scheduledExecutorService.schedule(() -> new Transform().excute(), 1, TimeUnit.SECONDS);
+            });
+
+            // Đợi cho tất cả các công việc hoàn thành
+            CompletableFuture.allOf(crawlerFuture, extractFuture, transformFuture).join();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            // Đóng scheduled executor service
+            scheduledExecutorService.shutdown();
+        }
+
+
     }
 
 }
