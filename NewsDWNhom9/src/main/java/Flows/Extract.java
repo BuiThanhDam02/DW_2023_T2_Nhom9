@@ -3,6 +3,7 @@ package Flows;
 import DAO.ControlDAO;
 import DatabaseConfig.JDBIConnector;
 import Models.Config;
+import Models.Status;
 import PropertiesConfig.PropertiesConfig;
 import QueryConfig.ReadQuery;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -18,23 +19,37 @@ import java.time.LocalDate;
 
 public class Extract {
     PropertiesConfig PPC ;
-    public Extract() {
+    ControlDAO controlDAO;
+    public Extract(ControlDAO controlDAO) {
+        this.controlDAO = controlDAO;
         this.PPC = new PropertiesConfig("path.properties");
+    }
+    public String getFilePath(){
+        Class<?> clazz = Crawler.class;
+        // và lấy CodeSource từ ProtectionDomain
+        URL location = clazz.getProtectionDomain().getCodeSource().getLocation();
+        // Chuyển đổi URL thành đường dẫn file
+        String filePath = location.getPath();
+        String decodedPath = new File(filePath).getAbsolutePath();
+        return decodedPath;
     }
     public void readExcelAndWriteSQL() {
 
         try {
-            Config c = ControlDAO.getCurrentConfig();
-            Jdbi jdbi = JDBIConnector.get(c.getStagingSourceHost(),c.getStagingSourcePort(),c.getStagingDbName(),c.getStagingSourceUsername(),c.getStagingSourcePassword());
+
+            Config c = this.controlDAO.getCurrentConfig();
+            Jdbi jdbi = new JDBIConnector().get(c.getStagingSourceHost(),c.getStagingSourcePort(),c.getStagingDbName(),c.getStagingSourceUsername(),c.getStagingSourcePassword());
 
             String staging_SQL_path = new PropertiesConfig("path.properties").getResource().get("staging_query_path");
             ReadQuery s_rq = new ReadQuery(staging_SQL_path);
             String insert_query = s_rq.getInsertStatements().get(0);
 
             String truncate_query =  s_rq.getTruncateStatements().get(0);
+            this.controlDAO.setConfigStatus(Status.CLEANING.name());
             jdbi.withHandle(h ->
                     h.createUpdate(truncate_query).execute()
             );
+            this.controlDAO.setConfigStatus(Status.CLEANED.name());
             String csv_file_path = c.getDownloadPath()+"news.xls";
             File file = new File(csv_file_path);
             System.out.println(file);
@@ -86,6 +101,7 @@ public class Extract {
             fis.close();
             System.out.println("access");
         } catch (Exception  e) {
+            this.controlDAO.createLog("Extract Exception","Extract Exception Error","ERROR",getFilePath(),"",e.toString());
             throw new RuntimeException(e);
         }
     }
@@ -118,7 +134,10 @@ public class Extract {
                 while ((bytesRead = inputStream.read(buffer)) != -1) {
                     outputStream.write(buffer, 0, bytesRead);
                 }
-            } finally {
+            } catch (Exception e){
+                this.controlDAO.createLog("Extract Download Exception","Extract Download Exception Error","ERROR",getFilePath(),"",e.toString());
+
+            }finally {
                 inputStream.close();
             }
             return fileName;
@@ -126,10 +145,28 @@ public class Extract {
     }
     public void excute(){
         try {
-            System.out.println("Extracting in proccessing...");
-            readExcelAndWriteSQL();
-            System.out.println("Done Extracting!!");
+            if (this.controlDAO.checkConfigStatus(Status.CRAWLED.name())) {
+                System.out.println("Extracting in proccessing...");
+                this.controlDAO.setConfigStatus(Status.EXTRACTING.name());
+                readExcelAndWriteSQL();
+                this.controlDAO.setConfigStatus(Status.EXTRACTED.name());
+                this.controlDAO.createLog("Extract","Extracting Successfully","INFO",getFilePath(),"","Done Extracting data from news.csv to table  news_staging in Staging DB!!");
+
+            }else if (this.controlDAO.checkConfigStatus(Status.EXTRACTING.name())){
+                System.out.println("Extracting in proccessing...");
+                readExcelAndWriteSQL();
+                this.controlDAO.setConfigStatus(Status.EXTRACTED.name());
+                this.controlDAO.createLog("Extract","Extracting Successfully","INFO",getFilePath(),"","Done Extracting data from news.csv to table  news_staging in Staging DB!!");
+            }
+            else if (this.controlDAO.checkConfigStatus(Status.CLEANED.name())){
+                System.out.println("Extracting in proccessing...");
+                readExcelAndWriteSQL();
+                this.controlDAO.setConfigStatus(Status.EXTRACTED.name());
+                this.controlDAO.createLog("Extract","Extracting Successfully","INFO",getFilePath(),"","Done Extracting data from news.csv to table  news_staging in Staging DB!!");
+            }
         }catch (Exception e){
+            this.controlDAO.createLog("Extract Exception","Extract Exception Error","ERROR",getFilePath(),"",e.toString());
+
             e.printStackTrace();
         }
 
