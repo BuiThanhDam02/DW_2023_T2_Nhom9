@@ -2,14 +2,17 @@ package DAO;
 
 import DatabaseConfig.JDBIConnector;
 import Models.Config;
+import org.jdbi.v3.core.Jdbi;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class ControlDAO {
-    public static Config getCurrentConfig(){
-
-        List<Config> configs = JDBIConnector.get().withHandle(handle -> {
+    private Config current_config;
+    private Jdbi jdbi;
+    public ControlDAO(){
+        this.jdbi = new JDBIConnector().get();
+        List<Config> configs = this.jdbi.withHandle(handle -> {
             // Thực hiện câu truy vấn SELECT
             String sql = "SELECT * FROM configs";
             return handle.createQuery(sql)
@@ -23,6 +26,62 @@ public class ControlDAO {
                 cur_config=c;
             }
         }
-        return cur_config;
+        this.current_config = cur_config;
+    }
+    public  Config getCurrentConfig(){
+        return this.current_config;
+    }
+    public  Jdbi getControlJDBI(){
+        return this.jdbi;
+    }
+    public void setConfigStatus(String status){
+        try {
+            getControlJDBI().withHandle(handle -> {
+                handle.createUpdate("UPDATE configs SET status = ? WHERE flag = 'TRUE' and id = ? ")
+                        .bind(0, status)
+                        .bind(1,getCurrentConfig().getId())
+                        .execute();
+                return null;
+            });
+            this.current_config.setStatus(status);
+        }catch (Exception e){
+            System.out.println("Error in update status");
+            e.printStackTrace();
+
+        }
+    }
+
+    public boolean checkConfigStatus(String status){
+        try {
+            boolean isStatusExists = getControlJDBI().withHandle(handle -> {
+                String sql = "SELECT COUNT(*) FROM configs WHERE status = ? and id = ?";
+                int count = handle.createQuery(sql)
+                        .bind(0, status)
+                        .bind(1,getCurrentConfig().getId())
+                        .mapTo(Integer.class)
+                        .one();
+                return count > 0;
+            });
+            if (isStatusExists) {
+                getCurrentConfig().setStatus(status);
+                return true;
+            }else{
+                return false;
+            }
+
+        } catch (Exception e) {
+            // Xử lý ngoại lệ (exception) tại đây
+            return false;
+        }
+    }
+    public void createLog(String name, String message, String level, String source, String note, String content){
+        getControlJDBI().withHandle(handle -> {
+            handle.createUpdate("INSERT INTO logs (name, message, level, source, note, content)\n" +
+                    "VALUES (?,?,?,?,?,?);").bind(0,name)
+                    .bind(1,message)
+                    .bind(2,level).bind(3,source)
+                    .bind(4,note).bind(5,content).execute();
+           return null;
+        });
     }
 }

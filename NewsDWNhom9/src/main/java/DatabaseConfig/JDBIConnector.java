@@ -6,12 +6,11 @@ import com.mysql.cj.jdbc.MysqlDataSource;
 import org.jdbi.v3.core.Jdbi;
 
 public class JDBIConnector {
-    private static Jdbi jdbi;
+private  Jdbi jdbi;
 
-    private static void makeConnect()   {
+    private  void makeConnect()   {
         DatabaseControl dc =new DatabaseControl(new PropertiesConfig("db.properties"));
         MysqlDataSource dataSource = new MysqlDataSource();
-
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             dataSource.setURL("jdbc:mysql://" + dc.getDbHost() + ":" + dc.getDbPort() + "/" + dc.getDbName());
@@ -23,13 +22,12 @@ public class JDBIConnector {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
-        jdbi = Jdbi.create(dataSource);
+        this.jdbi = Jdbi.create(dataSource);
 
     }
 
-    private static void makeConnect(String host ,int port, String name, String username, String password)   {
+    private  void makeConnect(String host ,int port, String name, String username, String password)   {
         MysqlDataSource dataSource = new MysqlDataSource();
-
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             dataSource.setURL("jdbc:mysql://" + host + ":" + port+ "/" + name);
@@ -41,22 +39,23 @@ public class JDBIConnector {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
-        jdbi = Jdbi.create(dataSource);
+        this.jdbi = Jdbi.create(dataSource);
+
 
     }
 
-    private JDBIConnector() {
+    public JDBIConnector() {
+
     }
 
-    public static Jdbi get() {
-        makeConnect();
-        return jdbi;
+    public  Jdbi get() {
+        if (this.jdbi ==null)        makeConnect();
+        return this.jdbi;
+
     }
-    public static Jdbi get(String host ,int port, String name, String username, String password) {
-        makeConnect( host , port,  name,  username,  password);
-        return jdbi;
-    }
-    public static void main(String[] args) {
+    public  Jdbi get(String host ,int port, String name, String username, String password) {
+        if (this.jdbi ==null)         makeConnect( host , port,  name,  username,  password);
+        return this.jdbi;
 
     }
 

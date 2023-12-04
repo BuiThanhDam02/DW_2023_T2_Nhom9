@@ -1,6 +1,5 @@
-import Flows.Crawler;
-import Flows.Extract;
-import Flows.Transform;
+import DAO.ControlDAO;
+import Flows.*;
 
 
 import lombok.Data;
@@ -19,25 +18,37 @@ public class Main {
         // Số lượng luồng trong thread pool
         int threadPoolSize = 1;
 
+
         // Tạo một ScheduledExecutorService với số lượng luồng được xác định
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(threadPoolSize);
 
         try {
+            ControlDAO controlDAO = new ControlDAO();
             // Crawler
-            CompletableFuture<Void> crawlerFuture = CompletableFuture.runAsync(() -> new Crawler().excute());
+            CompletableFuture<Void> crawlerFuture = CompletableFuture.runAsync(() -> new Crawler(controlDAO).excute());
 
             // Extract
             CompletableFuture<Void> extractFuture = crawlerFuture.thenCompose(result ->
-                    CompletableFuture.runAsync(() -> new Extract().excute())
+                    CompletableFuture.runAsync(() -> new Extract(controlDAO).excute())
             );
 
             // Transform
             CompletableFuture<Void> transformFuture = extractFuture.thenRun(() -> {
-                scheduledExecutorService.schedule(() -> new Transform().excute(), 1, TimeUnit.SECONDS);
+                scheduledExecutorService.schedule(() -> new Transform(controlDAO).excute(), 1, TimeUnit.SECONDS);
+            });
+            // Aggregate
+            CompletableFuture<Void> aggregateFuture = transformFuture.thenRun(() -> {
+
+                scheduledExecutorService.schedule(() ->  new Aggregate(controlDAO).excute(), 1, TimeUnit.SECONDS);
             });
 
+            // Mart
+            CompletableFuture<Void> martFuture = aggregateFuture.thenRun(() -> {
+
+                scheduledExecutorService.schedule(() ->  new Mart(controlDAO).excute(), 1, TimeUnit.SECONDS);
+            });
             // Đợi cho tất cả các công việc hoàn thành
-            CompletableFuture.allOf(crawlerFuture, extractFuture, transformFuture).join();
+            CompletableFuture.allOf(crawlerFuture, extractFuture, transformFuture,aggregateFuture,martFuture).join();
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
