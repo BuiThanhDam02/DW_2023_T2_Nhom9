@@ -3,6 +3,7 @@ package Flows;
 import DAO.ControlDAO;
 import DatabaseConfig.JDBIConnector;
 import Models.Config;
+import Models.ConfigFile;
 import Models.Status;
 import PropertiesConfig.PropertiesConfig;
 import QueryConfig.ReadQuery;
@@ -41,6 +42,12 @@ public class Transform {
                 this.controlDAO.setConfigStatus(Status.LOADED.name());
                 this.controlDAO.createLog("Loading to Warehouse ","Loading Successfully","INFO",getFilePath(),"","Done Loading data from news_staging to table  news_warehouse in Warehouse DB!!");
 
+            }else if (this.controlDAO.checkConfigStatus(Status.TRANSFORMING.name())) {
+                System.out.println("Loading in Proccessing...");
+                transform();
+                this.controlDAO.setConfigStatus(Status.LOADED.name());
+                this.controlDAO.createLog("Loading to Warehouse ","Loading Successfully","INFO",getFilePath(),"","Done Loading data from news_staging to table  news_warehouse in Warehouse DB!!");
+
             }
 
         }catch (Exception e){
@@ -56,15 +63,18 @@ public class Transform {
         Jdbi s_jdbi = new JDBIConnector().get(c.getStagingSourceHost(),c.getStagingSourcePort(),c.getStagingDbName(),c.getStagingSourceUsername(),c.getStagingSourcePassword());
         Jdbi wh_jdbi = new JDBIConnector().get(c.getWhSourceHost(),c.getWhSourcePort(),c.getWhDbName(),c.getWhSourceUsername(),c.getWhSourcePassword());
 
-        String staging_SQL_path = new PropertiesConfig("path.properties").getResource().get("staging_query_path");
+        ConfigFile cfStaging = controlDAO.getConfigFile("staging_query");
+        String staging_SQL_path = cfStaging.getPath()+cfStaging.getName()+cfStaging.getDelimiter()+cfStaging.getExtension();
         ReadQuery srq = new ReadQuery(staging_SQL_path);
         String select_query_staging =  srq.getSelectStatements().get(0);
 
-        String transform_SQL_path = new PropertiesConfig("path.properties").getResource().get("transform_query_path");
+        ConfigFile cfTransform = controlDAO.getConfigFile("transform_query");
+        String transform_SQL_path = cfTransform.getPath()+cfTransform.getName()+cfTransform.getDelimiter()+cfTransform.getExtension();
         ReadQuery transform_rq = new ReadQuery(transform_SQL_path);
 
 
-        String WH_SQL_path = new PropertiesConfig("path.properties").getResource().get("warehouse_query_path");
+        ConfigFile cfWH = controlDAO.getConfigFile("warehouse_query");
+        String WH_SQL_path = cfWH.getPath()+cfWH.getName()+cfWH.getDelimiter()+cfWH.getExtension();
         ReadQuery wh_rq = new ReadQuery(WH_SQL_path);
         String insert_query_wh =  wh_rq.getInsertStatements().get(0);
         this.controlDAO.setConfigStatus(Status.TRANSFORMING.name());

@@ -3,6 +3,7 @@ package Flows;
 import DAO.ControlDAO;
 import DatabaseConfig.JDBIConnector;
 import Models.Config;
+import Models.ConfigFile;
 import Models.Status;
 import PropertiesConfig.PropertiesConfig;
 import QueryConfig.ReadQuery;
@@ -18,11 +19,9 @@ import java.net.URL;
 import java.time.LocalDate;
 
 public class Extract {
-    PropertiesConfig PPC ;
     ControlDAO controlDAO;
     public Extract(ControlDAO controlDAO) {
         this.controlDAO = controlDAO;
-        this.PPC = new PropertiesConfig("path.properties");
     }
     public String getFilePath(){
         Class<?> clazz = Crawler.class;
@@ -39,8 +38,8 @@ public class Extract {
 
             Config c = this.controlDAO.getCurrentConfig();
             Jdbi jdbi = new JDBIConnector().get(c.getStagingSourceHost(),c.getStagingSourcePort(),c.getStagingDbName(),c.getStagingSourceUsername(),c.getStagingSourcePassword());
-
-            String staging_SQL_path = new PropertiesConfig("path.properties").getResource().get("staging_query_path");
+            ConfigFile cfStaging = controlDAO.getConfigFile("staging_query");
+            String staging_SQL_path = cfStaging.getPath()+cfStaging.getName()+cfStaging.getDelimiter()+cfStaging.getExtension();
             ReadQuery s_rq = new ReadQuery(staging_SQL_path);
             String insert_query = s_rq.getInsertStatements().get(0);
 
@@ -75,10 +74,10 @@ public class Extract {
                 String dayString = String.valueOf(currentDate.getDayOfMonth());
                 String monthString = String.valueOf(currentDate.getMonthValue());
                 String yearString = String.valueOf(currentDate.getYear());
-                String img_path =  this.PPC.getResource().get("output_D_path") +"\\"+this.PPC.getResource().get("public_path") +
-                        "\\"+this.PPC.getResource().get("img_path")+"\\";
+                ConfigFile cf = controlDAO.getConfigFile("newspaper_default");
+                String img_path =  cf.getPath();
                 if (fileImageName == "") {
-                    image = img_path+this.PPC.getResource().get("default_path")+"\\"+this.PPC.getResource().get("default_img_path");
+                    image = img_path+"default\\"+cf.getName()+cf.getDelimiter()+cf.getExtension();
                 } else {
                   image =img_path+yearString+"\\"+monthString+"\\"+dayString+"\\" + fileImageName;
                 }
@@ -117,8 +116,7 @@ public class Extract {
             String dayString = String.valueOf(currentDate.getDayOfMonth());
             String monthString = String.valueOf(currentDate.getMonthValue());
             String yearString = String.valueOf(currentDate.getYear());
-            String img_path =  this.PPC.getResource().get("output_D_path") +"\\"+this.PPC.getResource().get("public_path") +
-                    "\\"+this.PPC.getResource().get("img_path")+"\\";
+            String img_path =  controlDAO.getConfigFile("newspaper_default").getPath();
 
             File folder = new File(img_path+yearString+"\\"+monthString+"\\"+dayString+"\\");
             if (!folder.exists()) {
@@ -158,7 +156,7 @@ public class Extract {
                 this.controlDAO.setConfigStatus(Status.EXTRACTED.name());
                 this.controlDAO.createLog("Extract","Extracting Successfully","INFO",getFilePath(),"","Done Extracting data from news.csv to table  news_staging in Staging DB!!");
             }
-            else if (this.controlDAO.checkConfigStatus(Status.CLEANED.name())){
+            else if (this.controlDAO.checkConfigStatus(Status.CLEANED.name()) || this.controlDAO.checkConfigStatus(Status.CLEANING.name())){
                 System.out.println("Extracting in proccessing...");
                 readExcelAndWriteSQL();
                 this.controlDAO.setConfigStatus(Status.EXTRACTED.name());

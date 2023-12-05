@@ -24,7 +24,6 @@ public class Aggregate {
 //        System.out.println(c);
 
             Jdbi a_jdbi = new JDBIConnector().get(c.getWhSourceHost(),c.getWhSourcePort(),c.getWhDbName(),c.getWhSourceUsername(),c.getWhSourcePassword());
-            String aggregate_path = new PropertiesConfig("path.properties").getResource().get("aggregate_procedure_path");
             try {
                 a_jdbi.withHandle(handle -> {
                     handle.createCall("call aggregate_procedure()")

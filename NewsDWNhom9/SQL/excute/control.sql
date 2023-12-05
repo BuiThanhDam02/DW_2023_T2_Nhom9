@@ -11,11 +11,42 @@
  Target Server Version : 80031
  File Encoding         : 65001
 
- Date: 04/12/2023 12:17:39
+ Date: 05/12/2023 10:07:05
 */
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
+
+-- ----------------------------
+-- Table structure for config_files
+-- ----------------------------
+DROP TABLE IF EXISTS `config_files`;
+CREATE TABLE `config_files`  (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `df_config_id` int NULL DEFAULT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `extension` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `delimiter` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `file_timestamp` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_by` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT 'Admin',
+  `isdelete` int NULL DEFAULT 0,
+  `status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT 'TRUE',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `df_config_id`(`df_config_id` ASC) USING BTREE,
+  CONSTRAINT `config_files_ibfk_1` FOREIGN KEY (`df_config_id`) REFERENCES `configs` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of config_files
+-- ----------------------------
+INSERT INTO `config_files` VALUES (1, 1, 'staging_query', 'SQL/query/', 'sql', '.', '2023-12-05 09:17:10', NULL, '2023-12-05 09:17:10', 'Admin', 0, 'TRUE');
+INSERT INTO `config_files` VALUES (2, 1, 'transform_query', 'SQL/query/', 'sql', '.', '2023-12-05 09:17:10', NULL, '2023-12-05 09:17:10', 'Admin', 0, 'TRUE');
+INSERT INTO `config_files` VALUES (3, 1, 'warehouse_query', 'SQL/query/', 'sql', '.', '2023-12-05 09:17:10', NULL, '2023-12-05 09:17:10', 'Admin', 0, 'TRUE');
+INSERT INTO `config_files` VALUES (4, 1, 'mart_query', 'SQL/query/', 'sql', '.', '2023-12-05 09:17:10', NULL, '2023-12-05 09:17:10', 'Admin', 0, 'TRUE');
+INSERT INTO `config_files` VALUES (5, 1, 'newspaper_default', 'D:\\\\Data Warehouse\\\\public\\\\img\\\\', 'png', '.', '2023-12-05 09:17:10', NULL, '2023-12-05 09:17:10', 'Admin', 0, 'TRUE');
 
 -- ----------------------------
 -- Table structure for configs
@@ -46,13 +77,14 @@ CREATE TABLE `configs`  (
   `error_to_mail` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `flag` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `status` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `web_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of configs
 -- ----------------------------
-INSERT INTO `configs` VALUES (1, 'news.jar', 'root', '212901261', 3306, 'staging', 'localhost', 'root', '212901261', 3306, 'warehouse', 'localhost', 'root', '212901261', 3306, 'mart', 'localhost', 'D:\\\\Data Warehouse\\\\Data\\\\Crawler\\\\', 'id;titile;url;image_url;description;content;cateogry;date', 'INT;VARCHAR(100);VARCHAR(100);VARCHAR(100);VARCHAR(100);TEXT;VARCHAR(50);DATE', ';', '20130217@st.hcmuaf.edu.vn', 'TRUE', 'MARTLOADED');
+INSERT INTO `configs` VALUES (1, 'news.jar', 'root', '212901261', 3306, 'staging', 'localhost', 'root', '212901261', 3306, 'warehouse', 'localhost', 'root', '212901261', 3306, 'mart', 'localhost', 'D:\\\\Data Warehouse\\\\Data\\\\Crawler\\\\', 'id;titile;url;image_url;description;content;cateogry;date', 'INT;VARCHAR(100);VARCHAR(100);VARCHAR(100);VARCHAR(100);TEXT;VARCHAR(50);DATE', ';', '20130217@st.hcmuaf.edu.vn', 'TRUE', 'MARTLOADED', 'https://vnexpress.net/tin-tuc-24h');
 
 -- ----------------------------
 -- Table structure for logs
@@ -101,5 +133,11 @@ INSERT INTO `logs` VALUES (21, 'Loading to Warehouse ', '2023-12-04 12:15:17', '
 INSERT INTO `logs` VALUES (22, 'Aggregate', '2023-12-04 12:15:17', 'Aggregate Successfully', 'INFO', 'D:\\Data%20Warehouse\\Thu2_Nhom9\\code\\NewsDWNhom9\\target\\classes', '20130217@st.hcmuaf.edu.vn', '', 'Done Aggregating data from news_warehouse to table  aggregate in Warehouse DB!!', '2023-12-04 12:15:17', 'Admin', 'SUCCESS');
 INSERT INTO `logs` VALUES (23, 'Load to Mart Exception', '2023-12-04 12:15:20', 'Load to Mart Exception Error', 'ERROR', 'D:\\Data%20Warehouse\\Thu2_Nhom9\\code\\NewsDWNhom9\\target\\classes', '20130217@st.hcmuaf.edu.vn', '', 'org.jdbi.v3.core.statement.UnableToExecuteStatementException: com.mysql.cj.jdbc.exceptions.MysqlDataTruncation: Data truncation: Data too long for column \'image_path\' at row 1 [statement:\"INSERT INTO news (title,  image_path,description, content, category_name, full_date, day, month, year)\nSELECT :title,  :image_path,:description, :content, :category_name, :full_date, :day, :month, :year\nFROM dual\nWHERE NOT EXISTS (\n        SELECT 1\n        FROM news\n        WHERE title = :title\n                  AND image_path = :image_path\n                  AND description = :description\n                  AND content = :content\n                  AND category_name = :category_name\n                  AND full_date = :full_date\n                  AND day = :day\n                  AND month = :month\n                  AND year = :year\n    );\n\", arguments:{positional:{}, named:{category_name:Du lịch,month:12,year:2023,image_path:D:\\Data Warehouse\\public\\img\\2023\\12\\4\\393205506-2561484364025088-123889738239183520-n-1701662698.jpg,description:Đà Nẵng có hai cơ sở lưu trú thắng giải \"hàng đầu thế giới\" tại World Travel Awards, tiếp đến là Phú Quốc, Khánh Hòa và Lào Cai.,title:5 khách sạn, resort Việt thắng giải \'hàng đầu thế giới\' 2023,full_date:2023-12-04,day:4,content:Ngày 1/12 tại UAE đã diễn ra lễ trao giải chung cuộc World Travel Awards 2023 (Giải thưởng Du lịch Thế giới). Ở hạng mục khách sạn, khu nghỉ dưỡng, Việt Nam có 5 đại diện được vinh danh.\nĐà Nẵng có hai cơ sở lưu trú được WTA 2023 vinh danh. InterContinental Danang Sun Peninsula Resort nằm trên sườn đồi xanh tốt của bán đảo Sơn Trà thắng giải \"Khu nghỉ dưỡng xanh hàng đầu thế giới\" và là lần thứ 4 liên tiếp được vinh danh tại hạng mục này. Ảnh: InterCon\nNgày 1/12 tại UAE đã diễn ra lễ trao giải chung cuộc World Travel Awards 2023 (Giải thưởng Du lịch Thế giới). Ở hạng mục khách sạn, khu nghỉ dưỡng,[...]]', '2023-12-04 12:15:20', 'Admin', 'SUCCESS');
 INSERT INTO `logs` VALUES (24, 'Mart', '2023-12-04 12:17:07', 'Load to Mart Successfully', 'INFO', 'D:\\Data%20Warehouse\\Thu2_Nhom9\\code\\NewsDWNhom9\\target\\classes', '20130217@st.hcmuaf.edu.vn', '', 'Done Loading data from aggregate to table  news in Mart DB!!', '2023-12-04 12:17:07', 'Admin', 'SUCCESS');
+INSERT INTO `logs` VALUES (25, 'Crawler', '2023-12-05 10:04:24', 'Crawler Successfully', 'INFO', 'D:\\Data%20Warehouse\\Thu2_Nhom9\\code\\NewsDWNhom9\\target\\classes', '20130217@st.hcmuaf.edu.vn', '', 'Done Crawling data from web!!', '2023-12-05 10:04:24', 'Admin', 'SUCCESS');
+INSERT INTO `logs` VALUES (26, 'Extract', '2023-12-05 10:04:26', 'Extracting Successfully', 'INFO', 'D:\\Data%20Warehouse\\Thu2_Nhom9\\code\\NewsDWNhom9\\target\\classes', '20130217@st.hcmuaf.edu.vn', '', 'Done Extracting data from news.csv to table  news_staging in Staging DB!!', '2023-12-05 10:04:26', 'Admin', 'SUCCESS');
+INSERT INTO `logs` VALUES (27, 'Transform ', '2023-12-05 10:04:31', 'Transform Successfully', 'INFO', 'D:\\Data%20Warehouse\\Thu2_Nhom9\\code\\NewsDWNhom9\\target\\classes', '20130217@st.hcmuaf.edu.vn', '', 'Done Transform data from news_staging to table  news_warehouse in Warehouse DB!!', '2023-12-05 10:04:31', 'Admin', 'SUCCESS');
+INSERT INTO `logs` VALUES (28, 'Loading to Warehouse ', '2023-12-05 10:04:31', 'Loading Successfully', 'INFO', 'D:\\Data%20Warehouse\\Thu2_Nhom9\\code\\NewsDWNhom9\\target\\classes', '20130217@st.hcmuaf.edu.vn', '', 'Done Loading data from news_staging to table  news_warehouse in Warehouse DB!!', '2023-12-05 10:04:31', 'Admin', 'SUCCESS');
+INSERT INTO `logs` VALUES (29, 'Aggregate', '2023-12-05 10:04:32', 'Aggregate Successfully', 'INFO', 'D:\\Data%20Warehouse\\Thu2_Nhom9\\code\\NewsDWNhom9\\target\\classes', '20130217@st.hcmuaf.edu.vn', '', 'Done Aggregating data from news_warehouse to table  aggregate in Warehouse DB!!', '2023-12-05 10:04:32', 'Admin', 'SUCCESS');
+INSERT INTO `logs` VALUES (30, 'Mart', '2023-12-05 10:04:36', 'Load to Mart Successfully', 'INFO', 'D:\\Data%20Warehouse\\Thu2_Nhom9\\code\\NewsDWNhom9\\target\\classes', '20130217@st.hcmuaf.edu.vn', '', 'Done Loading data from aggregate to table  news in Mart DB!!', '2023-12-05 10:04:36', 'Admin', 'SUCCESS');
 
 SET FOREIGN_KEY_CHECKS = 1;
