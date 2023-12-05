@@ -28,11 +28,11 @@ import java.util.Date;
 import java.util.List;
 
 public class Crawler {
-    PropertiesConfig PPC ;
+
     ControlDAO controlDAO;
 
     public Crawler(   ControlDAO controlDAO ) {
-        this.PPC = new PropertiesConfig("path.properties");
+
         this.controlDAO=controlDAO;
 
     }
@@ -47,7 +47,7 @@ public class Crawler {
     }
 
     public List<News> crawlData() {
-        String url = this.PPC.getResource().get("web_news_url");
+        String url = controlDAO.getCurrentConfig().getWebUrl();
         ArrayList<News> list = new ArrayList<>();
         try {
             Document document = Jsoup.connect(url).get();
@@ -125,8 +125,7 @@ public class Crawler {
         // Lấy ngày hiện tại
 
 
-        String dir =  this.PPC.getResource().get("output_D_path") +"\\"+ this.PPC.getResource().get("data_path") + "\\"+this.PPC.getResource().get("crawler_data_path") +
-                "\\";
+        String dir =  controlDAO.getCurrentConfig().getDownloadPath();
         String filexsl = dir+"news.xls";
         File xlsfile = new File(filexsl);
         if (new File(filexsl).exists()){

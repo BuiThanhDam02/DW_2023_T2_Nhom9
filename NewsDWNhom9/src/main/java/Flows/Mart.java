@@ -3,6 +3,7 @@ package Flows;
 import DAO.ControlDAO;
 import DatabaseConfig.JDBIConnector;
 import Models.Config;
+import Models.ConfigFile;
 import Models.Status;
 import PropertiesConfig.PropertiesConfig;
 import QueryConfig.ReadQuery;
@@ -44,12 +45,15 @@ public class Mart {
         Jdbi mart_jdbi = new JDBIConnector().get(c.getMartSourceHost(),c.getMartSourcePort(),c.getMartDbName(),c.getMartSourceUsername(),c.getMartSourcePassword());
         Jdbi wh_jdbi = new JDBIConnector().get(c.getWhSourceHost(),c.getWhSourcePort(),c.getWhDbName(),c.getWhSourceUsername(),c.getWhSourcePassword());
 
+        ConfigFile cfWH = controlDAO.getConfigFile("warehouse_query");
+        String WH_SQL_path = cfWH.getPath()+cfWH.getName()+cfWH.getDelimiter()+cfWH.getExtension();
 
-        String WH_SQL_path = new PropertiesConfig("path.properties").getResource().get("warehouse_query_path");
         ReadQuery wh_rq = new ReadQuery(WH_SQL_path);
         String select_query_wh =  wh_rq.getSelectStatements().get(0);
 
-        String MART_SQL_path = new PropertiesConfig("path.properties").getResource().get("mart_query_path");
+        ConfigFile cfMART = controlDAO.getConfigFile("mart_query");
+        String MART_SQL_path = cfMART.getPath()+cfMART.getName()+cfMART.getDelimiter()+cfMART.getExtension();
+
         ReadQuery mart_rq = new ReadQuery(MART_SQL_path);
         String insert_query_mart =  mart_rq.getInsertStatements().get(0);
 
@@ -94,10 +98,10 @@ public class Mart {
         return decodedPath;
     }
     public static void main(String[] args) {
-        String MART_SQL_path = new PropertiesConfig("path.properties").getResource().get("mart_query_path");
-        ReadQuery mart_rq = new ReadQuery(MART_SQL_path);
-        String insert_query_mart =  mart_rq.getInsertStatements().get(0);
-        System.out.println(insert_query_mart);
+//        String MART_SQL_path = new PropertiesConfig("path.properties").getResource().get("mart_query_path");
+//        ReadQuery mart_rq = new ReadQuery(MART_SQL_path);
+//        String insert_query_mart =  mart_rq.getInsertStatements().get(0);
+//        System.out.println(insert_query_mart);
     }
 
 }

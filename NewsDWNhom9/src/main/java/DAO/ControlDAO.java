@@ -2,6 +2,7 @@ package DAO;
 
 import DatabaseConfig.JDBIConnector;
 import Models.Config;
+import Models.ConfigFile;
 import org.jdbi.v3.core.Jdbi;
 
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.stream.Collectors;
 public class ControlDAO {
     private Config current_config;
     private Jdbi jdbi;
+    private List<ConfigFile> configFileList;
     public ControlDAO(){
         this.jdbi = new JDBIConnector().get();
         List<Config> configs = this.jdbi.withHandle(handle -> {
@@ -27,12 +29,29 @@ public class ControlDAO {
             }
         }
         this.current_config = cur_config;
+        List<ConfigFile> listFiles = this.jdbi.withHandle(h ->{
+            return h.createQuery("SELECT * FROM `config_files` WHERE df_config_id = ? AND isdelete=0 and status='TRUE'")
+                    .bind(0,getCurrentConfig().getId())
+                    .mapToBean(ConfigFile.class).stream().collect(Collectors.toList());
+        });
+        this.configFileList = listFiles;
+
     }
     public  Config getCurrentConfig(){
         return this.current_config;
     }
     public  Jdbi getControlJDBI(){
         return this.jdbi;
+    }
+    public List<ConfigFile> getConfigFileList(){
+        return this.configFileList;
+    }
+    public ConfigFile getConfigFile(String name){
+        for (ConfigFile cf:
+             getConfigFileList()) {
+            if (cf.getName().equals(name)) return cf;
+        }
+        return null;
     }
     public void setConfigStatus(String status){
         try {
@@ -83,5 +102,10 @@ public class ControlDAO {
                     .bind(4,note).bind(5,content).execute();
            return null;
         });
+    }
+
+    public static void main(String[] args) {
+        ControlDAO c = new ControlDAO();
+        System.out.println(c.getConfigFile("newspaper_default"));
     }
 }

@@ -28,10 +28,14 @@ public class Config  implements Serializable {
     private String flag;
     private String status;
 
+    private String webUrl;
+
     // Constructors, getters, and setters
 
     // Constructor
-    public Config(int id, String folderName, String stagingSourceUsername, String stagingSourcePassword, int stagingSourcePort, String stagingDbName, String stagingSourceHost, String whSourceUsername, String whSourcePassword, int whSourcePort, String whDbName, String whSourceHost, String martSourceUsername, String martSourcePassword, int martSourcePort, String martDbName, String martSourceHost, String downloadPath, String fileColumnList, String fileVariable, String delimiter, String errorToMail, String flag, String status) {
+
+
+    public Config(int id, String folderName, String stagingSourceUsername, String stagingSourcePassword, int stagingSourcePort, String stagingDbName, String stagingSourceHost, String whSourceUsername, String whSourcePassword, int whSourcePort, String whDbName, String whSourceHost, String martSourceUsername, String martSourcePassword, int martSourcePort, String martDbName, String martSourceHost, String downloadPath, String fileColumnList, String fileVariable, String delimiter, String errorToMail, String flag, String status, String webUrl) {
         this.id = id;
         this.folderName = folderName;
         this.stagingSourceUsername = stagingSourceUsername;
@@ -56,6 +60,7 @@ public class Config  implements Serializable {
         this.errorToMail = errorToMail;
         this.flag = flag;
         this.status = status;
+        this.webUrl = webUrl;
     }
 
     public Config() {
@@ -89,6 +94,7 @@ public class Config  implements Serializable {
                 ", errorToMail='" + errorToMail + '\'' +
                 ", flag='" + flag + '\'' +
                 ", status='" + status + '\'' +
+                ", webUrl='" + webUrl + '\'' +
                 '}';
     }
 
@@ -282,5 +288,13 @@ public class Config  implements Serializable {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getWebUrl() {
+        return webUrl;
+    }
+
+    public void setWebUrl(String webUrl) {
+        this.webUrl = webUrl;
     }
 }
