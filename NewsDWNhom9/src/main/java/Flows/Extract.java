@@ -24,13 +24,18 @@ public class Extract {
         this.controlDAO = controlDAO;
     }
     public String getFilePath(){
-        Class<?> clazz = Crawler.class;
-        // và lấy CodeSource từ ProtectionDomain
-        URL location = clazz.getProtectionDomain().getCodeSource().getLocation();
-        // Chuyển đổi URL thành đường dẫn file
-        String filePath = location.getPath();
-        String decodedPath = new File(filePath).getAbsolutePath();
-        return decodedPath;
+//        Class<?> clazz = Extract.class;
+//        // và lấy CodeSource từ ProtectionDomain
+//        URL location = clazz.getProtectionDomain().getCodeSource().getLocation();
+//        String filePath = location.getPath();
+//        String decodedPath = new File(filePath).getAbsolutePath();
+//        String classesFolderPath = decodedPath.replace("%20", " ");
+        String classesFolderPath = new File("").getAbsolutePath();
+        boolean isInTarget = classesFolderPath.contains("target");
+        if (isInTarget){
+            return classesFolderPath+"\\classes";
+        }
+        return classesFolderPath+"\\target\\classes";
     }
     public void readExcelAndWriteSQL() {
 
@@ -39,8 +44,9 @@ public class Extract {
             Config c = this.controlDAO.getCurrentConfig();
             Jdbi jdbi = new JDBIConnector().get(c.getStagingSourceHost(),c.getStagingSourcePort(),c.getStagingDbName(),c.getStagingSourceUsername(),c.getStagingSourcePassword());
             ConfigFile cfStaging = controlDAO.getConfigFile("staging_query");
-            String staging_SQL_path = cfStaging.getPath()+cfStaging.getName()+cfStaging.getDelimiter()+cfStaging.getExtension();
+            String staging_SQL_path = getFilePath()+ cfStaging.getPath()+cfStaging.getName()+cfStaging.getDelimiter()+cfStaging.getExtension();
             ReadQuery s_rq = new ReadQuery(staging_SQL_path);
+
             String insert_query = s_rq.getInsertStatements().get(0);
 
             String truncate_query =  s_rq.getTruncateStatements().get(0);
@@ -168,5 +174,9 @@ public class Extract {
             e.printStackTrace();
         }
 
+    }
+
+    public static void main(String[] args) {
+        System.out.println(new Extract(new ControlDAO()).getFilePath());
     }
 }

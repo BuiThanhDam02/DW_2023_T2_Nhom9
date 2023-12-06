@@ -37,13 +37,18 @@ public class Crawler {
 
     }
     public String getFilePath(){
-        Class<?> clazz = Crawler.class;
-        // và lấy CodeSource từ ProtectionDomain
-        URL location = clazz.getProtectionDomain().getCodeSource().getLocation();
-        // Chuyển đổi URL thành đường dẫn file
-        String filePath = location.getPath();
-        String decodedPath = new File(filePath).getAbsolutePath();
-        return decodedPath;
+//        Class<?> clazz = Extract.class;
+//        // và lấy CodeSource từ ProtectionDomain
+//        URL location = clazz.getProtectionDomain().getCodeSource().getLocation();
+//        String filePath = location.getPath();
+//        String decodedPath = new File(filePath).getAbsolutePath();
+//        String classesFolderPath = decodedPath.replace("%20", " ");
+        String classesFolderPath = new File("").getAbsolutePath();
+        boolean isInTarget = classesFolderPath.contains("target");
+        if (isInTarget){
+            return classesFolderPath+"\\classes";
+        }
+        return classesFolderPath+"\\target\\classes";
     }
 
     public List<News> crawlData() {

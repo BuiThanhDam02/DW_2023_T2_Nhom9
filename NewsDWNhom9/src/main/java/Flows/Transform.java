@@ -19,13 +19,18 @@ public class Transform {
         this.controlDAO = controlDAO;
     }
     public String getFilePath(){
-        Class<?> clazz = Crawler.class;
-        // và lấy CodeSource từ ProtectionDomain
-        URL location = clazz.getProtectionDomain().getCodeSource().getLocation();
-        // Chuyển đổi URL thành đường dẫn file
-        String filePath = location.getPath();
-        String decodedPath = new File(filePath).getAbsolutePath();
-        return decodedPath;
+//        Class<?> clazz = Extract.class;
+//        // và lấy CodeSource từ ProtectionDomain
+//        URL location = clazz.getProtectionDomain().getCodeSource().getLocation();
+//        String filePath = location.getPath();
+//        String decodedPath = new File(filePath).getAbsolutePath();
+//        String classesFolderPath = decodedPath.replace("%20", " ");
+        String classesFolderPath = new File("").getAbsolutePath();
+        boolean isInTarget = classesFolderPath.contains("target");
+        if (isInTarget){
+            return classesFolderPath+"\\classes";
+        }
+        return classesFolderPath+"\\target\\classes";
     }
     public void excute(){
         try {
@@ -64,17 +69,17 @@ public class Transform {
         Jdbi wh_jdbi = new JDBIConnector().get(c.getWhSourceHost(),c.getWhSourcePort(),c.getWhDbName(),c.getWhSourceUsername(),c.getWhSourcePassword());
 
         ConfigFile cfStaging = controlDAO.getConfigFile("staging_query");
-        String staging_SQL_path = cfStaging.getPath()+cfStaging.getName()+cfStaging.getDelimiter()+cfStaging.getExtension();
+        String staging_SQL_path = getFilePath()+ cfStaging.getPath()+cfStaging.getName()+cfStaging.getDelimiter()+cfStaging.getExtension();
         ReadQuery srq = new ReadQuery(staging_SQL_path);
         String select_query_staging =  srq.getSelectStatements().get(0);
 
         ConfigFile cfTransform = controlDAO.getConfigFile("transform_query");
-        String transform_SQL_path = cfTransform.getPath()+cfTransform.getName()+cfTransform.getDelimiter()+cfTransform.getExtension();
+        String transform_SQL_path = getFilePath()+ cfTransform.getPath()+cfTransform.getName()+cfTransform.getDelimiter()+cfTransform.getExtension();
         ReadQuery transform_rq = new ReadQuery(transform_SQL_path);
 
 
         ConfigFile cfWH = controlDAO.getConfigFile("warehouse_query");
-        String WH_SQL_path = cfWH.getPath()+cfWH.getName()+cfWH.getDelimiter()+cfWH.getExtension();
+        String WH_SQL_path = getFilePath()+ cfWH.getPath()+cfWH.getName()+cfWH.getDelimiter()+cfWH.getExtension();
         ReadQuery wh_rq = new ReadQuery(WH_SQL_path);
         String insert_query_wh =  wh_rq.getInsertStatements().get(0);
         this.controlDAO.setConfigStatus(Status.TRANSFORMING.name());

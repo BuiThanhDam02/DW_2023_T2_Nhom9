@@ -47,7 +47,7 @@ public class Main {
 
                 scheduledExecutorService.schedule(() ->  new Mart(controlDAO).excute(), 1, TimeUnit.SECONDS);
             });
-            // Đợi cho tất cả các công việc hoàn thành
+//             Đợi cho tất cả các công việc hoàn thành
             CompletableFuture.allOf(crawlerFuture, extractFuture, transformFuture,aggregateFuture,martFuture).join();
         } catch (Exception e) {
             e.printStackTrace();
