@@ -46,13 +46,13 @@ public class Mart {
         Jdbi wh_jdbi = new JDBIConnector().get(c.getWhSourceHost(),c.getWhSourcePort(),c.getWhDbName(),c.getWhSourceUsername(),c.getWhSourcePassword());
 
         ConfigFile cfWH = controlDAO.getConfigFile("warehouse_query");
-        String WH_SQL_path = cfWH.getPath()+cfWH.getName()+cfWH.getDelimiter()+cfWH.getExtension();
+        String WH_SQL_path = getFilePath()+ cfWH.getPath()+cfWH.getName()+cfWH.getDelimiter()+cfWH.getExtension();
 
         ReadQuery wh_rq = new ReadQuery(WH_SQL_path);
         String select_query_wh =  wh_rq.getSelectStatements().get(0);
 
         ConfigFile cfMART = controlDAO.getConfigFile("mart_query");
-        String MART_SQL_path = cfMART.getPath()+cfMART.getName()+cfMART.getDelimiter()+cfMART.getExtension();
+        String MART_SQL_path = getFilePath()+ cfMART.getPath()+cfMART.getName()+cfMART.getDelimiter()+cfMART.getExtension();
 
         ReadQuery mart_rq = new ReadQuery(MART_SQL_path);
         String insert_query_mart =  mart_rq.getInsertStatements().get(0);
@@ -89,13 +89,18 @@ public class Mart {
 
     }
     public String getFilePath(){
-        Class<?> clazz = Crawler.class;
-        // và lấy CodeSource từ ProtectionDomain
-        URL location = clazz.getProtectionDomain().getCodeSource().getLocation();
-        // Chuyển đổi URL thành đường dẫn file
-        String filePath = location.getPath();
-        String decodedPath = new File(filePath).getAbsolutePath();
-        return decodedPath;
+//        Class<?> clazz = Extract.class;
+//        // và lấy CodeSource từ ProtectionDomain
+//        URL location = clazz.getProtectionDomain().getCodeSource().getLocation();
+//        String filePath = location.getPath();
+//        String decodedPath = new File(filePath).getAbsolutePath();
+//        String classesFolderPath = decodedPath.replace("%20", " ");
+        String classesFolderPath = new File("").getAbsolutePath();
+        boolean isInTarget = classesFolderPath.contains("target");
+        if (isInTarget){
+            return classesFolderPath+"\\classes";
+        }
+        return classesFolderPath+"\\target\\classes";
     }
     public static void main(String[] args) {
 //        String MART_SQL_path = new PropertiesConfig("path.properties").getResource().get("mart_query_path");
