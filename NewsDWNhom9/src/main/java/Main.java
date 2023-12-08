@@ -45,7 +45,7 @@ public class Main {
             // Mart
             CompletableFuture<Void> martFuture = aggregateFuture.thenRun(() -> {
 
-                scheduledExecutorService.schedule(() ->  new Mart(controlDAO).excute(), 1, TimeUnit.SECONDS);
+                scheduledExecutorService.schedule(() ->  new Load(controlDAO).excute(), 1, TimeUnit.SECONDS);
             });
 //             Đợi cho tất cả các công việc hoàn thành
             CompletableFuture.allOf(crawlerFuture, extractFuture, transformFuture,aggregateFuture,martFuture).join();

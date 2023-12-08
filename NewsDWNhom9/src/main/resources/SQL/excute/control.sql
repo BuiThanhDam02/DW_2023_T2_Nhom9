@@ -11,7 +11,7 @@
  Target Server Version : 80031
  File Encoding         : 65001
 
- Date: 06/12/2023 10:04:29
+ Date: 08/12/2023 18:51:30
 */
 
 SET NAMES utf8mb4;
@@ -37,7 +37,7 @@ CREATE TABLE `config_files`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `df_config_id`(`df_config_id` ASC) USING BTREE,
   CONSTRAINT `config_files_ibfk_1` FOREIGN KEY (`df_config_id`) REFERENCES `configs` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of config_files
@@ -79,12 +79,12 @@ CREATE TABLE `configs`  (
   `status` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   `web_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of configs
 -- ----------------------------
-INSERT INTO `configs` VALUES (1, 'news.jar', 'root', '212901261', 3306, 'staging', 'localhost', 'root', '212901261', 3306, 'warehouse', 'localhost', 'root', '212901261', 3306, 'mart', 'localhost', 'D:\\\\Data Warehouse\\\\Data\\\\Crawler\\\\', 'id;titile;url;image_url;description;content;cateogry;date', 'INT;VARCHAR(100);VARCHAR(100);VARCHAR(100);VARCHAR(100);TEXT;VARCHAR(50);DATE', ';', '20130217@st.hcmuaf.edu.vn', 'TRUE', 'MARTLOADED', 'https://vnexpress.net/tin-tuc-24h');
+INSERT INTO `configs` VALUES (1, 'news.jar', 'root', '212901261', 3306, 'staging', 'localhost', 'root', '212901261', 3306, 'warehouse', 'localhost', 'root', '212901261', 3306, 'mart', 'localhost', 'D:\\\\Data Warehouse\\\\Data\\\\Crawler\\\\', 'id;titile;url;image_url;description;content;cateogry;date', 'INT;VARCHAR(100);VARCHAR(100);VARCHAR(100);VARCHAR(100);TEXT;VARCHAR(50);DATE', ';', '20130217@st.hcmuaf.edu.vn', 'TRUE', 'LOADED', 'https://vnexpress.net/tin-tuc-24h');
 
 -- ----------------------------
 -- Table structure for logs
@@ -104,7 +104,7 @@ CREATE TABLE `logs`  (
   `created_by` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT 'Admin',
   `status` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT 'SUCCESS',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 30 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 103 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of logs
@@ -212,5 +212,17 @@ INSERT INTO `logs` VALUES (100, 'Transform ', '2023-12-06 09:57:21', 'Transform 
 INSERT INTO `logs` VALUES (101, 'Loading to Warehouse ', '2023-12-06 09:57:21', 'Loading Successfully', 'INFO', 'D:\\Data Warehouse\\Thu2_Nhom9\\code\\NewsDWNhom9\\target\\classes', '20130217@st.hcmuaf.edu.vn', '', 'Done Loading data from news_staging to table  news_warehouse in Warehouse DB!!', '2023-12-06 09:57:21', 'Admin', 'SUCCESS');
 INSERT INTO `logs` VALUES (102, 'Aggregate', '2023-12-06 09:57:21', 'Aggregate Successfully', 'INFO', 'D:\\Data Warehouse\\Thu2_Nhom9\\code\\NewsDWNhom9\\target\\classes', '20130217@st.hcmuaf.edu.vn', '', 'Done Aggregating data from news_warehouse to table  aggregate in Warehouse DB!!', '2023-12-06 09:57:21', 'Admin', 'SUCCESS');
 INSERT INTO `logs` VALUES (103, 'Mart', '2023-12-06 09:57:30', 'Load to Mart Successfully', 'INFO', 'D:\\Data Warehouse\\Thu2_Nhom9\\code\\NewsDWNhom9\\target\\classes', '20130217@st.hcmuaf.edu.vn', '', 'Done Loading data from aggregate to table  news in Mart DB!!', '2023-12-06 09:57:30', 'Admin', 'SUCCESS');
+INSERT INTO `logs` VALUES (104, 'Crawler', '2023-12-08 09:05:33', 'Crawler Successfully', 'INFO', 'D:\\Data Warehouse\\Thu2_Nhom9\\code\\NewsDWNhom9\\target\\classes', '20130217@st.hcmuaf.edu.vn', '', 'Done Crawling data from web!!', '2023-12-08 09:05:33', 'Admin', 'SUCCESS');
+INSERT INTO `logs` VALUES (105, 'Extract', '2023-12-08 09:05:35', 'Extracting Successfully', 'INFO', 'D:\\Data Warehouse\\Thu2_Nhom9\\code\\NewsDWNhom9\\target\\classes', '20130217@st.hcmuaf.edu.vn', '', 'Done Extracting data from news.csv to table  news_staging in Staging DB!!', '2023-12-08 09:05:35', 'Admin', 'SUCCESS');
+INSERT INTO `logs` VALUES (106, 'Transform ', '2023-12-08 09:05:40', 'Transform Successfully', 'INFO', 'D:\\Data Warehouse\\Thu2_Nhom9\\code\\NewsDWNhom9\\target\\classes', '20130217@st.hcmuaf.edu.vn', '', 'Done Transform data from news_staging to table  news_warehouse in Warehouse DB!!', '2023-12-08 09:05:40', 'Admin', 'SUCCESS');
+INSERT INTO `logs` VALUES (107, 'Loading to Warehouse ', '2023-12-08 09:05:40', 'Loading Successfully', 'INFO', 'D:\\Data Warehouse\\Thu2_Nhom9\\code\\NewsDWNhom9\\target\\classes', '20130217@st.hcmuaf.edu.vn', '', 'Done Loading data from news_staging to table  news_warehouse in Warehouse DB!!', '2023-12-08 09:05:40', 'Admin', 'SUCCESS');
+INSERT INTO `logs` VALUES (108, 'Aggregate', '2023-12-08 09:05:40', 'Aggregate Successfully', 'INFO', 'D:\\Data Warehouse\\Thu2_Nhom9\\code\\NewsDWNhom9\\target\\classes', '20130217@st.hcmuaf.edu.vn', '', 'Done Aggregating data from news_warehouse to table  aggregate in Warehouse DB!!', '2023-12-08 09:05:40', 'Admin', 'SUCCESS');
+INSERT INTO `logs` VALUES (109, 'Mart', '2023-12-08 09:05:49', 'Load to Mart Successfully', 'INFO', 'D:\\Data Warehouse\\Thu2_Nhom9\\code\\NewsDWNhom9\\target\\classes', '20130217@st.hcmuaf.edu.vn', '', 'Done Loading data from aggregate to table  news in Mart DB!!', '2023-12-08 09:05:49', 'Admin', 'SUCCESS');
+INSERT INTO `logs` VALUES (110, 'Crawler', '2023-12-08 18:49:29', 'Crawler Successfully', 'INFO', 'D:\\Data Warehouse\\Thu2_Nhom9\\code\\NewsDWNhom9\\target\\classes', '20130217@st.hcmuaf.edu.vn', '', 'Done Crawling data from web!!', '2023-12-08 18:49:29', 'Admin', 'SUCCESS');
+INSERT INTO `logs` VALUES (111, 'Extract', '2023-12-08 18:49:33', 'Extracting Successfully', 'INFO', 'D:\\Data Warehouse\\Thu2_Nhom9\\code\\NewsDWNhom9\\target\\classes', '20130217@st.hcmuaf.edu.vn', '', 'Done Extracting data from news.csv to table  news_staging in Staging DB!!', '2023-12-08 18:49:33', 'Admin', 'SUCCESS');
+INSERT INTO `logs` VALUES (112, 'Transform ', '2023-12-08 18:49:37', 'Transform Successfully', 'INFO', 'D:\\Data Warehouse\\Thu2_Nhom9\\code\\NewsDWNhom9\\target\\classes', '20130217@st.hcmuaf.edu.vn', '', 'Done Transform data from news_staging to table  news_warehouse in Warehouse DB!!', '2023-12-08 18:49:37', 'Admin', 'SUCCESS');
+INSERT INTO `logs` VALUES (113, 'Loading to Warehouse ', '2023-12-08 18:49:37', 'Loading Successfully', 'INFO', 'D:\\Data Warehouse\\Thu2_Nhom9\\code\\NewsDWNhom9\\target\\classes', '20130217@st.hcmuaf.edu.vn', '', 'Done Loading data from news_staging to table  news_warehouse in Warehouse DB!!', '2023-12-08 18:49:37', 'Admin', 'SUCCESS');
+INSERT INTO `logs` VALUES (114, 'Aggregate', '2023-12-08 18:49:37', 'Aggregate Successfully', 'INFO', 'D:\\Data Warehouse\\Thu2_Nhom9\\code\\NewsDWNhom9\\target\\classes', '20130217@st.hcmuaf.edu.vn', '', 'Done Aggregating data from news_warehouse to table  aggregate in Warehouse DB!!', '2023-12-08 18:49:37', 'Admin', 'SUCCESS');
+INSERT INTO `logs` VALUES (115, 'Mart', '2023-12-08 18:49:43', 'Load to Mart Successfully', 'INFO', 'D:\\Data Warehouse\\Thu2_Nhom9\\code\\NewsDWNhom9\\target\\classes', '20130217@st.hcmuaf.edu.vn', '', 'Done Loading data from aggregate to table  news in Mart DB!!', '2023-12-08 18:49:43', 'Admin', 'SUCCESS');
 
 SET FOREIGN_KEY_CHECKS = 1;
