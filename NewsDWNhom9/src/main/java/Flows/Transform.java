@@ -36,21 +36,12 @@ public class Transform {
         try {
             if (this.controlDAO.checkConfigStatus(Status.EXTRACTED.name())) {
                 System.out.println("Transforming in Proccessing...");
-                this.controlDAO.setConfigStatus(Status.LOADING.name());
                 transform();
-                this.controlDAO.setConfigStatus(Status.LOADED.name());
-                this.controlDAO.createLog("Loading to Warehouse ","Loading Successfully","INFO",getFilePath(),"","Done Loading data from news_staging to table  news_warehouse in Warehouse DB!!");
-
-            }else if (this.controlDAO.checkConfigStatus(Status.LOADING.name())) {
-                System.out.println("Loading in Proccessing...");
-                transform();
-                this.controlDAO.setConfigStatus(Status.LOADED.name());
                 this.controlDAO.createLog("Loading to Warehouse ","Loading Successfully","INFO",getFilePath(),"","Done Loading data from news_staging to table  news_warehouse in Warehouse DB!!");
 
             }else if (this.controlDAO.checkConfigStatus(Status.TRANSFORMING.name())) {
                 System.out.println("Loading in Proccessing...");
                 transform();
-                this.controlDAO.setConfigStatus(Status.LOADED.name());
                 this.controlDAO.createLog("Loading to Warehouse ","Loading Successfully","INFO",getFilePath(),"","Done Loading data from news_staging to table  news_warehouse in Warehouse DB!!");
 
             }

@@ -14,7 +14,7 @@ public enum Status {
     LOADED,
     AGGREGATING,
     AGGREGATED,
-    MARTLOADING,
-    MARTLOADED,
+//    MARTLOADING,
+//    MARTLOADED,
     ERR
 }

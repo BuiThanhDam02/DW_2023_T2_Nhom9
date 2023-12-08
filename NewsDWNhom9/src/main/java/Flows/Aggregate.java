@@ -40,7 +40,7 @@ public class Aggregate {
     }
     public void  excute(){
         try {
-            if (this.controlDAO.checkConfigStatus(Status.LOADED.name())) {
+            if (this.controlDAO.checkConfigStatus(Status.TRANSFORMED.name())) {
                 System.out.println("Aggregate in proccessing..");
                 this.controlDAO.setConfigStatus(Status.AGGREGATING.name());
                 aggregate();
