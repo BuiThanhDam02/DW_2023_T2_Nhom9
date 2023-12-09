@@ -44,9 +44,9 @@ public class PropertiesConfig {
     }
 
     public static void main(String[] args) {
-        PropertiesConfig pc = new PropertiesConfig("path.properties");
-        for (Map.Entry<String, String> entry : pc.getResource().entrySet()) {
-            System.out.println(entry.getKey() + ": " + entry.getValue());
-        }
+//        PropertiesConfig pc = new PropertiesConfig("path.properties");
+//        for (Map.Entry<String, String> entry : pc.getResource().entrySet()) {
+//            System.out.println(entry.getKey() + ": " + entry.getValue());
+//        }
     }
 }

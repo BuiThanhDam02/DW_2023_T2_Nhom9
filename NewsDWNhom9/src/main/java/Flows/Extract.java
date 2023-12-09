@@ -3,6 +3,8 @@ package Flows;
 import DAO.ControlDAO;
 import DatabaseConfig.JDBIConnector;
 import Models.Config;
+import Models.ConfigFile;
+import Models.Status;
 import PropertiesConfig.PropertiesConfig;
 import QueryConfig.ReadQuery;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -17,24 +19,42 @@ import java.net.URL;
 import java.time.LocalDate;
 
 public class Extract {
-    PropertiesConfig PPC ;
-    public Extract() {
-        this.PPC = new PropertiesConfig("path.properties");
+    ControlDAO controlDAO;
+    public Extract(ControlDAO controlDAO) {
+        this.controlDAO = controlDAO;
+    }
+    public String getFilePath(){
+//        Class<?> clazz = Extract.class;
+//        // và lấy CodeSource từ ProtectionDomain
+//        URL location = clazz.getProtectionDomain().getCodeSource().getLocation();
+//        String filePath = location.getPath();
+//        String decodedPath = new File(filePath).getAbsolutePath();
+//        String classesFolderPath = decodedPath.replace("%20", " ");
+        String classesFolderPath = new File("").getAbsolutePath();
+        boolean isInTarget = classesFolderPath.contains("target");
+        if (isInTarget){
+            return classesFolderPath+"\\classes";
+        }
+        return classesFolderPath+"\\target\\classes";
     }
     public void readExcelAndWriteSQL() {
 
         try {
-            Config c = ControlDAO.getCurrentConfig();
-            Jdbi jdbi = JDBIConnector.get(c.getStagingSourceHost(),c.getStagingSourcePort(),c.getStagingDbName(),c.getStagingSourceUsername(),c.getStagingSourcePassword());
 
-            String staging_SQL_path = new PropertiesConfig("path.properties").getResource().get("staging_query_path");
+            Config c = this.controlDAO.getCurrentConfig();
+            Jdbi jdbi = new JDBIConnector().get(c.getStagingSourceHost(),c.getStagingSourcePort(),c.getStagingDbName(),c.getStagingSourceUsername(),c.getStagingSourcePassword());
+            ConfigFile cfStaging = controlDAO.getConfigFile("staging_query");
+            String staging_SQL_path = getFilePath()+ cfStaging.getPath()+cfStaging.getName()+cfStaging.getDelimiter()+cfStaging.getExtension();
             ReadQuery s_rq = new ReadQuery(staging_SQL_path);
+
             String insert_query = s_rq.getInsertStatements().get(0);
 
             String truncate_query =  s_rq.getTruncateStatements().get(0);
+            this.controlDAO.setConfigStatus(Status.CLEANING.name());
             jdbi.withHandle(h ->
                     h.createUpdate(truncate_query).execute()
             );
+            this.controlDAO.setConfigStatus(Status.CLEANED.name());
             String csv_file_path = c.getDownloadPath()+"news.xls";
             File file = new File(csv_file_path);
             System.out.println(file);
@@ -60,10 +80,10 @@ public class Extract {
                 String dayString = String.valueOf(currentDate.getDayOfMonth());
                 String monthString = String.valueOf(currentDate.getMonthValue());
                 String yearString = String.valueOf(currentDate.getYear());
-                String img_path =  this.PPC.getResource().get("output_D_path") +"\\"+this.PPC.getResource().get("public_path") +
-                        "\\"+this.PPC.getResource().get("img_path")+"\\";
+                ConfigFile cf = controlDAO.getConfigFile("newspaper_default");
+                String img_path =  cf.getPath();
                 if (fileImageName == "") {
-                    image = img_path+this.PPC.getResource().get("default_path")+"\\"+this.PPC.getResource().get("default_img_path");
+                    image = img_path+"default\\"+cf.getName()+cf.getDelimiter()+cf.getExtension();
                 } else {
                   image =img_path+yearString+"\\"+monthString+"\\"+dayString+"\\" + fileImageName;
                 }
@@ -86,6 +106,7 @@ public class Extract {
             fis.close();
             System.out.println("access");
         } catch (Exception  e) {
+            this.controlDAO.createLog("Extract Exception","Extract Exception Error","ERROR",getFilePath(),"",e.toString());
             throw new RuntimeException(e);
         }
     }
@@ -101,8 +122,7 @@ public class Extract {
             String dayString = String.valueOf(currentDate.getDayOfMonth());
             String monthString = String.valueOf(currentDate.getMonthValue());
             String yearString = String.valueOf(currentDate.getYear());
-            String img_path =  this.PPC.getResource().get("output_D_path") +"\\"+this.PPC.getResource().get("public_path") +
-                    "\\"+this.PPC.getResource().get("img_path")+"\\";
+            String img_path =  controlDAO.getConfigFile("newspaper_default").getPath();
 
             File folder = new File(img_path+yearString+"\\"+monthString+"\\"+dayString+"\\");
             if (!folder.exists()) {
@@ -118,7 +138,10 @@ public class Extract {
                 while ((bytesRead = inputStream.read(buffer)) != -1) {
                     outputStream.write(buffer, 0, bytesRead);
                 }
-            } finally {
+            } catch (Exception e){
+                this.controlDAO.createLog("Extract Download Exception","Extract Download Exception Error","ERROR",getFilePath(),"",e.toString());
+
+            }finally {
                 inputStream.close();
             }
             return fileName;
@@ -126,12 +149,34 @@ public class Extract {
     }
     public void excute(){
         try {
-            System.out.println("Extracting in proccessing...");
-            readExcelAndWriteSQL();
-            System.out.println("Done Extracting!!");
+            if (this.controlDAO.checkConfigStatus(Status.CRAWLED.name())) {
+                System.out.println("Extracting in proccessing...");
+                this.controlDAO.setConfigStatus(Status.EXTRACTING.name());
+                readExcelAndWriteSQL();
+                this.controlDAO.setConfigStatus(Status.EXTRACTED.name());
+                this.controlDAO.createLog("Extract","Extracting Successfully","INFO",getFilePath(),"","Done Extracting data from news.csv to table  news_staging in Staging DB!!");
+
+            }else if (this.controlDAO.checkConfigStatus(Status.EXTRACTING.name())){
+                System.out.println("Extracting in proccessing...");
+                readExcelAndWriteSQL();
+                this.controlDAO.setConfigStatus(Status.EXTRACTED.name());
+                this.controlDAO.createLog("Extract","Extracting Successfully","INFO",getFilePath(),"","Done Extracting data from news.csv to table  news_staging in Staging DB!!");
+            }
+            else if (this.controlDAO.checkConfigStatus(Status.CLEANED.name()) || this.controlDAO.checkConfigStatus(Status.CLEANING.name())){
+                System.out.println("Extracting in proccessing...");
+                readExcelAndWriteSQL();
+                this.controlDAO.setConfigStatus(Status.EXTRACTED.name());
+                this.controlDAO.createLog("Extract","Extracting Successfully","INFO",getFilePath(),"","Done Extracting data from news.csv to table  news_staging in Staging DB!!");
+            }
         }catch (Exception e){
+            this.controlDAO.createLog("Extract Exception","Extract Exception Error","ERROR",getFilePath(),"",e.toString());
+
             e.printStackTrace();
         }
 
+    }
+
+    public static void main(String[] args) {
+        System.out.println(new Extract(new ControlDAO()).getFilePath());
     }
 }

@@ -1,6 +1,9 @@
 package Flows;
 
+import DAO.ControlDAO;
+import Models.Config;
 import Models.News;
+import Models.Status;
 import PropertiesConfig.PropertiesConfig;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Row;
@@ -15,6 +18,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -24,13 +28,31 @@ import java.util.Date;
 import java.util.List;
 
 public class Crawler {
-    PropertiesConfig PPC ;
-    public Crawler() {
-        this.PPC = new PropertiesConfig("path.properties");
+
+    ControlDAO controlDAO;
+
+    public Crawler(   ControlDAO controlDAO ) {
+
+        this.controlDAO=controlDAO;
+
+    }
+    public String getFilePath(){
+//        Class<?> clazz = Extract.class;
+//        // và lấy CodeSource từ ProtectionDomain
+//        URL location = clazz.getProtectionDomain().getCodeSource().getLocation();
+//        String filePath = location.getPath();
+//        String decodedPath = new File(filePath).getAbsolutePath();
+//        String classesFolderPath = decodedPath.replace("%20", " ");
+        String classesFolderPath = new File("").getAbsolutePath();
+        boolean isInTarget = classesFolderPath.contains("target");
+        if (isInTarget){
+            return classesFolderPath+"\\classes";
+        }
+        return classesFolderPath+"\\target\\classes";
     }
 
     public List<News> crawlData() {
-        String url = this.PPC.getResource().get("web_news_url");
+        String url = controlDAO.getCurrentConfig().getWebUrl();
         ArrayList<News> list = new ArrayList<>();
         try {
             Document document = Jsoup.connect(url).get();
@@ -77,6 +99,8 @@ public class Crawler {
             }
 
         } catch (IOException e) {
+
+            this.controlDAO.createLog("IOException","IOException Error","ERROR",getFilePath(),"",e.toString());
             throw new RuntimeException(e);
         }
         return list;
@@ -94,6 +118,7 @@ public class Crawler {
                 result[1] += e.text() + "\n";
             }
         } catch (IOException e) {
+            this.controlDAO.createLog("Crawler IOException","Crawler IOException Error","ERROR",getFilePath(),"",e.toString());
             throw new RuntimeException(e);
         }
 
@@ -105,16 +130,18 @@ public class Crawler {
         // Lấy ngày hiện tại
 
 
-        String dir =  this.PPC.getResource().get("output_D_path") +"\\"+ this.PPC.getResource().get("data_path") + "\\"+this.PPC.getResource().get("crawler_data_path") +
-                "\\";
+        String dir =  controlDAO.getCurrentConfig().getDownloadPath();
         String filexsl = dir+"news.xls";
         File xlsfile = new File(filexsl);
         if (new File(filexsl).exists()){
             xlsfile.delete();
         }
 
+
+
         Workbook workbook = new HSSFWorkbook();
         Sheet sheet = workbook.createSheet("Data");
+
         for (int i = 0; i < news.size(); i++) {
             Row row = sheet.createRow(i);
             row.createCell(0).setCellValue(news.get(i).getId());
@@ -123,7 +150,13 @@ public class Crawler {
             row.createCell(3).setCellValue(news.get(i).getImage());
             row.createCell(4).setCellValue(news.get(i).getDescription());
             row.createCell(5).setCellValue(news.get(i).getContent());
-            row.createCell(6).setCellValue(news.get(i).getCategory());
+            String[] category = news.get(i).getCategory().split(" ");
+            if (category.length >1){
+                row.createCell(6).setCellValue(category[0]+" "+category[1]);
+            }else {
+                row.createCell(6).setCellValue(category[0]);
+            }
+
             if (news.get(i).getDate() == null || news.get(i).getDate() == ""){
                 LocalDateTime currentDateTime = LocalDateTime.now();
 
@@ -144,7 +177,7 @@ public class Crawler {
             if (folder.mkdirs()) {
                 System.out.println("The folder is created successfully.");
             } else {
-                System.out.println("Failed to create the folder.");
+                this.controlDAO.createLog("Crawler Create File Error","Crawler Create File Error","ERROR",getFilePath(),"","Failed to create the folder.");
             }
         }
 
@@ -156,23 +189,41 @@ public class Crawler {
             workbook.write(fos);
             fos.flush();
             fos.close();
+
         }catch (Exception e) {
+            this.controlDAO.createLog("Crawler Write File Exception","Crawler Exception Error","ERROR",getFilePath(),"",e.toString());
+
             throw new RuntimeException(e);
         }
         return file;
     }
     public void excute(){
         try {
-            System.out.println("Crawling in proccessing...");
-            writeExcelFile();
-            System.out.println("Done Crawling!!");
+            if (this.controlDAO.checkConfigStatus(Status.PREPARE.name())){
+                System.out.println("Crawling in proccessing...");
+                controlDAO.setConfigStatus(Status.CRAWLING.name());
+                writeExcelFile();
+                controlDAO.setConfigStatus(Status.CRAWLED.name());
+                this.controlDAO.createLog("Crawler","Crawler Successfully","INFO",getFilePath(),"","Done Crawling data from web!!");
+
+            } else if (this.controlDAO.checkConfigStatus(Status.CRAWLING.name())) {
+                System.out.println("Crawling in proccessing...");
+                writeExcelFile();
+                controlDAO.setConfigStatus(Status.CRAWLED.name());
+                this.controlDAO.createLog("Crawler","Crawler Successfully","INFO",getFilePath(),"","Done Crawling data from web!!");
+
+            }
+
         }catch (Exception e){
+            this.controlDAO.createLog("Crawler Exception","Crawler Exception Error","ERROR",getFilePath(),"",e.toString());
+
             e.printStackTrace();
         }
 
     }
 
     public static void main(String[] args) {
-        new Crawler().excute();
+
     }
+
 }

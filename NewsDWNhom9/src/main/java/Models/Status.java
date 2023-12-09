@@ -1,0 +1,20 @@
+package Models;
+
+public enum Status {
+    PREPARE,
+    CRAWLING,
+    CRAWLED,
+    EXTRACTING,
+    CLEANING,
+    CLEANED,
+    EXTRACTED,
+    LOADING,
+    TRANSFORMING,
+    TRANSFORMED,
+    LOADED,
+    AGGREGATING,
+    AGGREGATED,
+//    MARTLOADING,
+//    MARTLOADED,
+    ERR
+}
