@@ -31,9 +31,12 @@
         <p class="news-daily-PK6">News Daily</p>
         <p class="trending-RWg">Trending....</p>
       </div>
+      <div class="news-item-list">
+
+
       <c:forEach items="${all}" var="news">
         <div class="news-item">
-          <img class="news-img" src="${newsDetail.image_path}"/>
+          <img class="news-img" src="${news.image_path}"/>
           <div class="news-text">
             <div class="container-news-item">
               <a class="news-title" href="/newsDetailController?id=${news.id}">${news.title}</a>
@@ -54,19 +57,20 @@
           </div>
         </div>
       </c:forEach>
+      </div>
     </div>
     <div class="right">
       <div class="container-shadow">
         <c:set value="${top1}" var="top1News"/>
         <img class="new-news-img" src="${top1News.image_path}"/>
-        <p class="new-news-title">${top1News.title}</p>
-        <p class="new-news-description">${top1News.description}</p>
+        <a class="new-news-title" href="/newsDetailController?id=${top1News.id}">${top1News.title}</a>
+        <p class="new-news-description" >${top1News.description}</p>
         <div class="container-date">
           <img class="date-icon" src="./assets/frame.png"/>
           <p class="new-news-date">${top1News.full_date}</p>
         </div>
-        <div class="new-news">
-          <p class="read-more">Read More</p>
+        <div class="new-news" >
+          <a href="/newsDetailController?id=${top1News.id}" class="read-more">Read More</a>
           <img class="read-more-icon" src="./assets/frame-7Np.png"/>
         </div>
 
