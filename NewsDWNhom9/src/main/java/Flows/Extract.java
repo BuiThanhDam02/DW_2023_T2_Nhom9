@@ -2,6 +2,7 @@ package Flows;
 
 import DAO.ControlDAO;
 import DatabaseConfig.JDBIConnector;
+import Mail.JavaMail;
 import Models.Config;
 import Models.ConfigFile;
 import Models.Status;
@@ -140,6 +141,7 @@ public class Extract {
                 }
             } catch (Exception e){
                 this.controlDAO.createLog("Extract Download Exception","Extract Download Exception Error","ERROR",getFilePath(),"",e.toString());
+                JavaMail.getInstance().sendMail(this.controlDAO.getCurrentConfig().getErrorToMail(),e.toString(),"Thông báo lỗi Extract DW","Extract Download Exception Error: "+getFilePath());
 
             }finally {
                 inputStream.close();
@@ -170,6 +172,7 @@ public class Extract {
             }
         }catch (Exception e){
             this.controlDAO.createLog("Extract Exception","Extract Exception Error","ERROR",getFilePath(),"",e.toString());
+            JavaMail.getInstance().sendMail(this.controlDAO.getCurrentConfig().getErrorToMail(),e.toString(),"Thông báo lỗi Extract DW","Extract Exception Error: "+getFilePath());
 
             e.printStackTrace();
         }

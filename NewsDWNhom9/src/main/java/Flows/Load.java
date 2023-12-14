@@ -2,6 +2,7 @@ package Flows;
 
 import DAO.ControlDAO;
 import DatabaseConfig.JDBIConnector;
+import Mail.JavaMail;
 import Models.Config;
 import Models.ConfigFile;
 import Models.Status;
@@ -23,16 +24,18 @@ public class Load {
                 loadtomart();
                 this.controlDAO.setConfigStatus(Status.LOADED.name());
                 this.controlDAO.createLog("Mart","Load to Mart Successfully","INFO",getFilePath(),"","Done Loading data from aggregate to table  news in Mart DB!!");
+                JavaMail.getInstance().sendMail(this.controlDAO.getCurrentConfig().getErrorToMail(),"Load to Mart Successfully","Thông báo hoàn thành Flow Crawler, Extract, Transform, Aggregate, Load DW","Data Warehouse load successfully: "+getFilePath());
 
             }else  if (this.controlDAO.checkConfigStatus(Status.LOADING.name())) {
                 System.out.println("Loading to Mart in Proccessing...");
                 loadtomart();
                 this.controlDAO.setConfigStatus(Status.LOADED.name());
                 this.controlDAO.createLog("Mart","Load to Mart Successfully","INFO",getFilePath(),"","Done Loading data from aggregate to table  news in Mart DB!!");
-
+                JavaMail.getInstance().sendMail(this.controlDAO.getCurrentConfig().getErrorToMail(),"Load to Mart Successfully","Thông báo hoàn thành Flow Crawler, Extract, Transform, Aggregate, Load DW","Data Warehouse load successfully: "+getFilePath());
             }
         }catch (Exception e){
             this.controlDAO.createLog("Load to Mart Exception","Load to Mart Exception Error","ERROR",getFilePath(),"",e.toString());
+            JavaMail.getInstance().sendMail(this.controlDAO.getCurrentConfig().getErrorToMail(),e.toString(),"Thông báo lỗi Load DW","Load to Mart Exception Error: "+getFilePath());
 
             throw new RuntimeException(e);
         }

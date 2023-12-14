@@ -2,6 +2,7 @@ package Flows;
 
 import DAO.ControlDAO;
 import DatabaseConfig.JDBIConnector;
+import Mail.JavaMail;
 import Models.Config;
 import Models.Status;
 import PropertiesConfig.PropertiesConfig;
@@ -33,7 +34,9 @@ public class Aggregate {
                 System.out.println("Aggregated Successfully!!");
             } catch (Exception e) {
                 this.controlDAO.createLog("Aggregate Exception","Aggregate Exception Error","ERROR",getFilePath(),"",e.toString());
-                e.printStackTrace();
+                JavaMail.getInstance().sendMail(this.controlDAO.getCurrentConfig().getErrorToMail(),e.toString(),"Thông báo lỗi Aggregate DW","Aggregate Exception Error: "+getFilePath());
+
+
             }
 
 
@@ -56,7 +59,9 @@ public class Aggregate {
             }
         }catch (Exception e){
             this.controlDAO.createLog("Aggregate Exception","Aggregate Exception Error","ERROR",getFilePath(),"",e.toString());
-            e.printStackTrace();
+            JavaMail.getInstance().sendMail(this.controlDAO.getCurrentConfig().getErrorToMail(),e.toString(),"Thông báo lỗi Aggregate DW","Aggregate Exception Error: "+getFilePath());
+
+
         }
     }
     public String getFilePath(){

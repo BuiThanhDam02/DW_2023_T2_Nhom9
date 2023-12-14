@@ -2,6 +2,7 @@ package Flows;
 
 import DAO.ControlDAO;
 import DatabaseConfig.JDBIConnector;
+import Mail.JavaMail;
 import Models.Config;
 import Models.ConfigFile;
 import Models.Status;
@@ -48,6 +49,7 @@ public class Transform {
 
         }catch (Exception e){
             this.controlDAO.createLog("Transform Loading Exception","Transform Loading Exception Error","ERROR",getFilePath(),"",e.toString());
+            JavaMail.getInstance().sendMail(this.controlDAO.getCurrentConfig().getErrorToMail(),e.toString(),"Thông báo lỗi Transform DW","Transform Loading Exception Error: "+getFilePath());
 
             throw new RuntimeException(e);
         }
@@ -205,6 +207,8 @@ public class Transform {
             this.controlDAO.setConfigStatus(Status.TRANSFORMED.name());
         }catch (Exception e){
             this.controlDAO.createLog("Transform Exception","Transform Exception Error","ERROR",getFilePath(),"",e.toString());
+            JavaMail.getInstance().sendMail(this.controlDAO.getCurrentConfig().getErrorToMail(),e.toString(),"Thông báo lỗi Transform DW","Transform Exception Error: "+getFilePath());
+
         }
 
 
