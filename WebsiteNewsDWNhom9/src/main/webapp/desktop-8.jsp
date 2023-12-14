@@ -22,7 +22,7 @@
     </div>
     <div class="news-box">
       <img class="menu-news-img" src="./assets/group-tcx.png"/>
-      <p class="news-kjz">News</p>
+      <a class="news-kjz" href="/mainController">News</a>
     </div>
   </div>
   <div class="main">
