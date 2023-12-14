@@ -1,6 +1,7 @@
 package Flows;
 
 import DAO.ControlDAO;
+import Mail.JavaMail;
 import Models.Config;
 import Models.News;
 import Models.Status;
@@ -14,10 +15,8 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import javax.mail.MessagingException;
+import java.io.*;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -51,7 +50,7 @@ public class Crawler {
         return classesFolderPath+"\\target\\classes";
     }
 
-    public List<News> crawlData() {
+    public List<News> crawlData()  {
         String url = controlDAO.getCurrentConfig().getWebUrl();
         ArrayList<News> list = new ArrayList<>();
         try {
@@ -101,6 +100,7 @@ public class Crawler {
         } catch (IOException e) {
 
             this.controlDAO.createLog("IOException","IOException Error","ERROR",getFilePath(),"",e.toString());
+            JavaMail.getInstance().sendMail(this.controlDAO.getCurrentConfig().getErrorToMail(),e.toString(),"Thông báo lỗi Crawler DW","IOException Error: "+getFilePath());
             throw new RuntimeException(e);
         }
         return list;
@@ -119,6 +119,8 @@ public class Crawler {
             }
         } catch (IOException e) {
             this.controlDAO.createLog("Crawler IOException","Crawler IOException Error","ERROR",getFilePath(),"",e.toString());
+            JavaMail.getInstance().sendMail(this.controlDAO.getCurrentConfig().getErrorToMail(),e.toString(),"Thông báo lỗi Crawler DW","Crawler IOException Error: "+getFilePath());
+
             throw new RuntimeException(e);
         }
 
@@ -177,7 +179,10 @@ public class Crawler {
             if (folder.mkdirs()) {
                 System.out.println("The folder is created successfully.");
             } else {
+
                 this.controlDAO.createLog("Crawler Create File Error","Crawler Create File Error","ERROR",getFilePath(),"","Failed to create the folder.");
+                JavaMail.getInstance().sendMail(this.controlDAO.getCurrentConfig().getErrorToMail(),"Failed to create the folder.","Thông báo lỗi Crawler DW","Crawler Create File Error: "+getFilePath());
+
             }
         }
 
@@ -192,6 +197,7 @@ public class Crawler {
 
         }catch (Exception e) {
             this.controlDAO.createLog("Crawler Write File Exception","Crawler Exception Error","ERROR",getFilePath(),"",e.toString());
+            JavaMail.getInstance().sendMail(this.controlDAO.getCurrentConfig().getErrorToMail(),e.toString(),"Thông báo lỗi Crawler DW","Crawler Exception Error: "+getFilePath());
 
             throw new RuntimeException(e);
         }
@@ -216,6 +222,7 @@ public class Crawler {
 
         }catch (Exception e){
             this.controlDAO.createLog("Crawler Exception","Crawler Exception Error","ERROR",getFilePath(),"",e.toString());
+            JavaMail.getInstance().sendMail(this.controlDAO.getCurrentConfig().getErrorToMail(),e.toString(),"Thông báo lỗi Crawler DW","Crawler Exception Error: "+getFilePath());
 
             e.printStackTrace();
         }
