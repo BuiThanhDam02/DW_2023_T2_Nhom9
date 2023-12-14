@@ -26,29 +26,8 @@ public class ImageService {
                 // Tạo đối tượng Path cho thư mục nguồn và đích
                 Path sourcePath = Paths.get(sourceFolderPath);
                 Path destinationPath = Paths.get(destinationFolderPath);
-                // Xóa thư mục đích nếu nó tồn tại
-                // Kiểm tra xem thư mục đích đã tồn tại hay chưa
-                if (Files.exists(destinationPath)) {
-                    try {
-                        // Xóa thư mục đích và nội dung bên trong nó
-                        Files.walk(destinationPath)
-                                .sorted(Comparator.reverseOrder())
-                                .map(Path::toFile)
-                                .forEach(file -> {
-                                    try {
-                                        Files.delete(file.toPath());
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
-                                });
 
-                        System.out.println("Xóa thư mục đích thành công.");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                } else {
-                    System.out.println("Thư mục đích không tồn tại.");
-                }
+
                 // Thực hiện copy
                 Files.walkFileTree(sourcePath, new SimpleFileVisitor<Path>() {
                     @Override
@@ -72,7 +51,7 @@ public class ImageService {
 
     }
     public static List<News> autowiredImagePath(List<News> newsList){
-        copyImageToLocalhost();
+
         for (News n:
                 newsList) {
             String[] pro = n.getImage_path().split("img\\\\");
@@ -84,7 +63,7 @@ public class ImageService {
         return newsList;
     }
     public static News autowiredImagePath(News news){
-//        copyImageToLocalhost();
+
 
             String[] pro = news.getImage_path().split("img\\\\");
             String pre = pro[pro.length-1];
@@ -93,5 +72,9 @@ public class ImageService {
         news.setImage_path("/img"+result);
 
         return news;
+    }
+
+    public static void main(String[] args) {
+        ImageService.copyImageToLocalhost();
     }
 }
