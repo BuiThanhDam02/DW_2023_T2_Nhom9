@@ -14,6 +14,7 @@ public class ControlDAO {
     private List<ConfigFile> configFileList;
     public ControlDAO(){
         this.jdbi = new JDBIConnector().get();
+        // Bước * Đọc dữ liệu bảng config lấy các dòng dữ liệu
         List<Config> configs = this.jdbi.withHandle(handle -> {
             // Thực hiện câu truy vấn SELECT
             String sql = "SELECT * FROM configs";
@@ -23,6 +24,7 @@ public class ControlDAO {
         });
         Config cur_config = null;
 
+        // Bước * Lấy 1 dòng file crawler có Flag = True
         for (Config c : configs) {
             if (c.getFlag().equals("TRUE")){
                 cur_config=c;

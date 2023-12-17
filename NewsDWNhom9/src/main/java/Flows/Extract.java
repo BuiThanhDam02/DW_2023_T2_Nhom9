@@ -41,28 +41,43 @@ public class Extract {
     public void readExcelAndWriteSQL() {
 
         try {
-
+            // Bước Extract 2.3 :Đọc dữ liệu bảng database_config
             Config c = this.controlDAO.getCurrentConfig();
+            // Bước Extract 2.4 :Lấy thông tin kết nối của dtb staging
+            // Bước Extract 2.5 :Kết nối dtb staging
             Jdbi jdbi = new JDBIConnector().get(c.getStagingSourceHost(),c.getStagingSourcePort(),c.getStagingDbName(),c.getStagingSourceUsername(),c.getStagingSourcePassword());
+            // Bước Extract 2.6 :Cập nhật status = CLEANING
+            this.controlDAO.setConfigStatus(Status.CLEANING.name());
+
+            // Bước Extract 2.7 :Ghép bảng config_file bằng id của config hiện tại
             ConfigFile cfStaging = controlDAO.getConfigFile("staging_query");
+            // Bước Extract 2.8 :Đọc thông tin đường dẫn file query của  staging
             String staging_SQL_path = getFilePath()+ cfStaging.getPath()+cfStaging.getName()+cfStaging.getDelimiter()+cfStaging.getExtension();
+            // Bước Extract 2.9 :Đọc thông tin file staging_query.sql
             ReadQuery s_rq = new ReadQuery(staging_SQL_path);
 
+            // Bước Extract 2.10 :Lấy câu ttruncate và insert
             String insert_query = s_rq.getInsertStatements().get(0);
-
             String truncate_query =  s_rq.getTruncateStatements().get(0);
-            this.controlDAO.setConfigStatus(Status.CLEANING.name());
+
+            // Bước Extract 2.11 :TRUNCATE bảng news_stagging
             jdbi.withHandle(h ->
                     h.createUpdate(truncate_query).execute()
             );
+            // Bước Extract 2.12 :Cập nhật status = CLEANED
             this.controlDAO.setConfigStatus(Status.CLEANED.name());
+
+            // Bước Extract 2.13 :đọc đường dẫn download file csv từ config
             String csv_file_path = c.getDownloadPath()+"news.xls";
             File file = new File(csv_file_path);
             System.out.println(file);
 
             FileInputStream fis = new FileInputStream(file);
+            // Bước Extract 2.14 :Lấy tất cả các dòng dữ liệu csv
+
             Workbook workbook = new HSSFWorkbook(fis);
             Sheet sheet = workbook.getSheetAt(0);
+            // Bước Extract 2.15 :Lặp qua từng dòng
             for (Row row: sheet) {
                 String title = row.getCell(1).getStringCellValue();
                 String url = row.getCell(2).getStringCellValue();
@@ -90,6 +105,7 @@ public class Extract {
                 }
                 String finalImage = image;
                 String crawlerDate = yearString+"-"+monthString+"-"+dayString;
+                // Bước Extract 2.16 : lưu từng dòng vào bảng news_staging bằng câu insert
                 jdbi.withHandle(h ->
                         h.createUpdate(insert_query)
                                 .bind(0,title)
@@ -108,6 +124,8 @@ public class Extract {
             System.out.println("access");
         } catch (Exception  e) {
             this.controlDAO.createLog("Extract Exception","Extract Exception Error","ERROR",getFilePath(),"",e.toString());
+            JavaMail.getInstance().sendMail(this.controlDAO.getCurrentConfig().getErrorToMail(),e.toString(),"Thông báo lỗi Extract DW","Extract Exception Error: "+getFilePath());
+
             throw new RuntimeException(e);
         }
     }
@@ -151,11 +169,15 @@ public class Extract {
     }
     public void excute(){
         try {
+            // Bước Extract 2.1 : Status = CRAWLED
             if (this.controlDAO.checkConfigStatus(Status.CRAWLED.name())) {
                 System.out.println("Extracting in proccessing...");
+                // Bước Extract 2.2 :Cập nhật status = EXTRACTING
                 this.controlDAO.setConfigStatus(Status.EXTRACTING.name());
                 readExcelAndWriteSQL();
+                // Bước Extract 2.17 : Cập nhật status EXTRACTED
                 this.controlDAO.setConfigStatus(Status.EXTRACTED.name());
+                // Bước Extract 2.18-21 : Tạo thông tin LOG , INFO , Ghi nội dung vào bảng LOG với câu Insert
                 this.controlDAO.createLog("Extract","Extracting Successfully","INFO",getFilePath(),"","Done Extracting data from news.csv to table  news_staging in Staging DB!!");
 
             }else if (this.controlDAO.checkConfigStatus(Status.EXTRACTING.name())){

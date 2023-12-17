@@ -6,7 +6,7 @@ import Mail.JavaMail;
 import Models.Config;
 import Models.ConfigFile;
 import Models.Status;
-import PropertiesConfig.PropertiesConfig;
+
 import QueryConfig.ReadQuery;
 import org.jdbi.v3.core.Jdbi;
 
@@ -20,12 +20,7 @@ public class Transform {
         this.controlDAO = controlDAO;
     }
     public String getFilePath(){
-//        Class<?> clazz = Extract.class;
-//        // và lấy CodeSource từ ProtectionDomain
-//        URL location = clazz.getProtectionDomain().getCodeSource().getLocation();
-//        String filePath = location.getPath();
-//        String decodedPath = new File(filePath).getAbsolutePath();
-//        String classesFolderPath = decodedPath.replace("%20", " ");
+
         String classesFolderPath = new File("").getAbsolutePath();
         boolean isInTarget = classesFolderPath.contains("target");
         if (isInTarget){
@@ -35,9 +30,11 @@ public class Transform {
     }
     public void excute(){
         try {
+            // Bước Transform 3.1 : kiểm tra status =EXTRACTED
             if (this.controlDAO.checkConfigStatus(Status.EXTRACTED.name())) {
                 System.out.println("Transforming in Proccessing...");
                 transform();
+                // Bước Transform 3.26 -27 : Tạo thông tin LOG , INFO , Ghi nội dung vào bảng LOG với câu Insert
                 this.controlDAO.createLog("Loading to Warehouse ","Loading Successfully","INFO",getFilePath(),"","Done Loading data from news_staging to table  news_warehouse in Warehouse DB!!");
 
             }else if (this.controlDAO.checkConfigStatus(Status.TRANSFORMING.name())) {
@@ -55,32 +52,42 @@ public class Transform {
         }
     }
     public void transform(){
-
-        ControlDAO controlDAO = new ControlDAO();
+        // Bước Transform 3.2 : Cập nhật status = TRANSFORMING
+        this.controlDAO.setConfigStatus(Status.TRANSFORMING.name());
         Config c = controlDAO.getCurrentConfig();
+        // Bước Transform 3.3 - 3.4 : Đọc dữ liệu config Lấy thông tin kết nối của dtb staging
         Jdbi s_jdbi = new JDBIConnector().get(c.getStagingSourceHost(),c.getStagingSourcePort(),c.getStagingDbName(),c.getStagingSourceUsername(),c.getStagingSourcePassword());
+
+        // Bước Transform 3.5 - 3.6 : Lấy thông tin kết nối của dtb warehouse và Kết nối dtb warehouse
         Jdbi wh_jdbi = new JDBIConnector().get(c.getWhSourceHost(),c.getWhSourcePort(),c.getWhDbName(),c.getWhSourceUsername(),c.getWhSourcePassword());
 
+        // Bước Transform 3.7 : Ghép bảng config_file bằng id của config hiện tại
         ConfigFile cfStaging = controlDAO.getConfigFile("staging_query");
+        // Bước Transform 3.8 : Đọc thông tin đường dẫn file query của  staging
         String staging_SQL_path = getFilePath()+ cfStaging.getPath()+cfStaging.getName()+cfStaging.getDelimiter()+cfStaging.getExtension();
+        // Bước Transform 3.9 : Đọc thông tin file staging_query.sql
         ReadQuery srq = new ReadQuery(staging_SQL_path);
+        // Bước Transform 3.10 : Lấy câu  select s
         String select_query_staging =  srq.getSelectStatements().get(0);
 
         ConfigFile cfTransform = controlDAO.getConfigFile("transform_query");
         String transform_SQL_path = getFilePath()+ cfTransform.getPath()+cfTransform.getName()+cfTransform.getDelimiter()+cfTransform.getExtension();
         ReadQuery transform_rq = new ReadQuery(transform_SQL_path);
 
-
+        // Bước Transform 3.11 : Đọc thông tin đường dẫn file query của  warehouse
         ConfigFile cfWH = controlDAO.getConfigFile("warehouse_query");
+        // Bước Transform 3.12 : Đọc thông tin file warehouse_query.sql
         String WH_SQL_path = getFilePath()+ cfWH.getPath()+cfWH.getName()+cfWH.getDelimiter()+cfWH.getExtension();
         ReadQuery wh_rq = new ReadQuery(WH_SQL_path);
+        // Bước Transform 3.13 : Lấy câu insert wh
         String insert_query_wh =  wh_rq.getInsertStatements().get(0);
-        this.controlDAO.setConfigStatus(Status.TRANSFORMING.name());
+
         try{
             s_jdbi.withHandle(handle -> {
-                // Execute the query and get a result set
+                // Bước Transform 3.14-3.15 : Lặp qua dữ liệu  news_staging bằng câu select và Lấy 1 dòng dữ liệu
                 handle.createQuery(select_query_staging).mapToMap().forEach(row -> {
-                    // Iterate over the columns of each row
+                    // Bước Transform 3.16-3.17 : Tiến hành tách dữ liệu ra thành từng trường , xử lý dữ liệu bảng news_staging
+                    //(missing,outlier,null,..)
                     String title = row.get("title").toString();
                     if (!(title.equals("") || title == null)){
                         String content = row.get("content").toString();
@@ -97,13 +104,18 @@ public class Transform {
                                 String finalCategory = category;
 
                                 // Category_dim
+                                // Bước Transform 3.18 :Đọc thông tin file transform_query.sql
                                 Map<String ,String> cat = transform_rq.getStatementsByComment("category");
+                                // Bước Transform 3.19 :Lấy câu  select id và insert vào dim
                                 String category_insert_query = cat.get("insert");
                                 String category_select_query = cat.get("select");
+
+                                // Bước Transform 3.20 :Thêm từng trường dữ liệu vào đúng bảng Dim tương ứng
                                 wh_jdbi.withHandle(h ->
                                         h.createUpdate(category_insert_query)
                                                 .bind(0, finalCategory).bind(1, finalCategory).execute()
                                 );
+                                // Bước Transform 3.21 : Biến đổi lại dòng dữ liệu theo id từng trường từ bảng Dim
                                 int categoryId = wh_jdbi.withHandle(h ->
                                         h.createQuery(category_select_query)
                                                 .bind(0, finalCategory)
@@ -183,7 +195,7 @@ public class Transform {
                                                 .findOne()
                                                 .orElse(null)
                                 );
-
+                                // Bước Transform 3.22 : Thêm dòng dữ liệu vào bảng news_warehouse bằng câu insert wh
                                 wh_jdbi.withHandle(h ->
                                         h.createUpdate(insert_query_wh)
                                                 .bind(0,title)
@@ -201,10 +213,14 @@ public class Transform {
                     }
 
                 });
+                // Bước Transform 3.23 : Lưu lại dữ liệu vào các bảng dim và bảng fact
                 return null;
             });
-            this.controlDAO.createLog("Transform ","Transform Successfully","INFO",getFilePath(),"","Done Transform data from news_staging to table  news_warehouse in Warehouse DB!!");
+            // Bước Transform 3.24 :Cập nhật status TRANSFORMED
             this.controlDAO.setConfigStatus(Status.TRANSFORMED.name());
+            // Bước Transform 3.25 :Ghi log INFO thành công Transform
+            this.controlDAO.createLog("Transform ","Transform Successfully","INFO",getFilePath(),"","Done Transform data from news_staging to table  news_warehouse in Warehouse DB!!");
+
         }catch (Exception e){
             this.controlDAO.createLog("Transform Exception","Transform Exception Error","ERROR",getFilePath(),"",e.toString());
             JavaMail.getInstance().sendMail(this.controlDAO.getCurrentConfig().getErrorToMail(),e.toString(),"Thông báo lỗi Transform DW","Transform Exception Error: "+getFilePath());
