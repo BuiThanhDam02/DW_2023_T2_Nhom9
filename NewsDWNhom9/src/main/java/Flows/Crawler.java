@@ -1,6 +1,7 @@
 package Flows;
 
 import DAO.ControlDAO;
+import Mail.JavaMail;
 import Models.Config;
 import Models.News;
 import Models.Status;
@@ -14,10 +15,8 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import javax.mail.MessagingException;
+import java.io.*;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -37,12 +36,6 @@ public class Crawler {
 
     }
     public String getFilePath(){
-//        Class<?> clazz = Extract.class;
-//        // và lấy CodeSource từ ProtectionDomain
-//        URL location = clazz.getProtectionDomain().getCodeSource().getLocation();
-//        String filePath = location.getPath();
-//        String decodedPath = new File(filePath).getAbsolutePath();
-//        String classesFolderPath = decodedPath.replace("%20", " ");
         String classesFolderPath = new File("").getAbsolutePath();
         boolean isInTarget = classesFolderPath.contains("target");
         if (isInTarget){
@@ -51,15 +44,19 @@ public class Crawler {
         return classesFolderPath+"\\target\\classes";
     }
 
-    public List<News> crawlData() {
+    public List<News> crawlData()  {
+        // Bước Crawler 1.3 : Lấy URL của trang web
         String url = controlDAO.getCurrentConfig().getWebUrl();
         ArrayList<News> list = new ArrayList<>();
+        //  Bước Crawler 1.4 :tiến hành đọc dữ liệu các thẻ html có chứa dữ liệu
         try {
             Document document = Jsoup.connect(url).get();
             Element mainlist = document.getElementById("automation_TV0");
             Elements item = mainlist.getElementsByClass("item-news item-news-common");
             int id = 1;
+            //  Bước Crawler 1.5 :Duyệt lần lượt các dòng
             for (Element i : item) {
+                // Bước Crawler 1.6 :Lấy 1 dòng
                 if (!i.attr("data-offset").equals("")) {
                     String link = i.getElementsByClass("title-news").
                             select("a").attr("href");
@@ -83,15 +80,14 @@ public class Crawler {
 
 
                     }
+                    // Bước Crawler 1.7 :lấy từng trường dữ liệu
                     String description = i.getElementsByClass("description").
                             select("a").text();
                     String[] detailNews = getNewsDetail(link);
                     String category = detailNews[0];
                     String content = detailNews[1];
                     String dateString = i.getElementsByClass("time-count").select("span").attr("datetime");
-
-//                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-//                    Date date = dateFormat.parse(dateString);
+                    // Bước Crawler 1.8 :Lưu lại dòng dữ liệu dạng Model New
                     list.add(new News(id, title, link, img, description,content,category, dateString));
                     id++;
                 }
@@ -101,6 +97,7 @@ public class Crawler {
         } catch (IOException e) {
 
             this.controlDAO.createLog("IOException","IOException Error","ERROR",getFilePath(),"",e.toString());
+            JavaMail.getInstance().sendMail(this.controlDAO.getCurrentConfig().getErrorToMail(),e.toString(),"Thông báo lỗi Crawler DW","IOException Error: "+getFilePath());
             throw new RuntimeException(e);
         }
         return list;
@@ -119,6 +116,8 @@ public class Crawler {
             }
         } catch (IOException e) {
             this.controlDAO.createLog("Crawler IOException","Crawler IOException Error","ERROR",getFilePath(),"",e.toString());
+            JavaMail.getInstance().sendMail(this.controlDAO.getCurrentConfig().getErrorToMail(),e.toString(),"Thông báo lỗi Crawler DW","Crawler IOException Error: "+getFilePath());
+
             throw new RuntimeException(e);
         }
 
@@ -126,13 +125,15 @@ public class Crawler {
     }
 
     public File writeExcelFile(){
+        // Bước Crawler 1.9 :Lưu tất cả dưới dạng list<New>
         List<News> news = crawlData();
-        // Lấy ngày hiện tại
 
-
+        //  Bước Crawler 1.10 :Đọc đường dẫn download từ bảng config
         String dir =  controlDAO.getCurrentConfig().getDownloadPath();
         String filexsl = dir+"news.xls";
         File xlsfile = new File(filexsl);
+
+        //  Bước Crawler 1.10.1 :Xóa tất cả dữ liệu cũ
         if (new File(filexsl).exists()){
             xlsfile.delete();
         }
@@ -141,7 +142,7 @@ public class Crawler {
 
         Workbook workbook = new HSSFWorkbook();
         Sheet sheet = workbook.createSheet("Data");
-
+        //  Bước Crawler 1.11 :Lưu tất cả dữ liệu mới vào file news.csv
         for (int i = 0; i < news.size(); i++) {
             Row row = sheet.createRow(i);
             row.createCell(0).setCellValue(news.get(i).getId());
@@ -177,7 +178,10 @@ public class Crawler {
             if (folder.mkdirs()) {
                 System.out.println("The folder is created successfully.");
             } else {
+
                 this.controlDAO.createLog("Crawler Create File Error","Crawler Create File Error","ERROR",getFilePath(),"","Failed to create the folder.");
+                JavaMail.getInstance().sendMail(this.controlDAO.getCurrentConfig().getErrorToMail(),"Failed to create the folder.","Thông báo lỗi Crawler DW","Crawler Create File Error: "+getFilePath());
+
             }
         }
 
@@ -187,11 +191,13 @@ public class Crawler {
         try {
             fos = new FileOutputStream(file);
             workbook.write(fos);
+            // Bước Crawler 1.12 :đóng file
             fos.flush();
             fos.close();
 
         }catch (Exception e) {
             this.controlDAO.createLog("Crawler Write File Exception","Crawler Exception Error","ERROR",getFilePath(),"",e.toString());
+            JavaMail.getInstance().sendMail(this.controlDAO.getCurrentConfig().getErrorToMail(),e.toString(),"Thông báo lỗi Crawler DW","Crawler Exception Error: "+getFilePath());
 
             throw new RuntimeException(e);
         }
@@ -199,11 +205,15 @@ public class Crawler {
     }
     public void excute(){
         try {
+            // Bước Crawler 1.1 : Kiểm tra Status = PREPARE
             if (this.controlDAO.checkConfigStatus(Status.PREPARE.name())){
                 System.out.println("Crawling in proccessing...");
+                // Bước Crawler 1.2 : Cập nhật status CRAWLING
                 controlDAO.setConfigStatus(Status.CRAWLING.name());
                 writeExcelFile();
+                // Bước Crawler 1.13 :Cập nhật status CRAWLED
                 controlDAO.setConfigStatus(Status.CRAWLED.name());
+                // Bước Crawler 1.14 -1.15 :Tạo thông tin LOG , INFO , Ghi nội dung vào bảng LOG với câu Insert
                 this.controlDAO.createLog("Crawler","Crawler Successfully","INFO",getFilePath(),"","Done Crawling data from web!!");
 
             } else if (this.controlDAO.checkConfigStatus(Status.CRAWLING.name())) {
@@ -216,6 +226,7 @@ public class Crawler {
 
         }catch (Exception e){
             this.controlDAO.createLog("Crawler Exception","Crawler Exception Error","ERROR",getFilePath(),"",e.toString());
+            JavaMail.getInstance().sendMail(this.controlDAO.getCurrentConfig().getErrorToMail(),e.toString(),"Thông báo lỗi Crawler DW","Crawler Exception Error: "+getFilePath());
 
             e.printStackTrace();
         }

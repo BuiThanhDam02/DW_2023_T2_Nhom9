@@ -53,59 +53,7 @@ public class ControlDAO {
         }
         return null;
     }
-    public void setConfigStatus(String status){
-        try {
-            getControlJDBI().withHandle(handle -> {
-                handle.createUpdate("UPDATE configs SET status = ? WHERE flag = 'TRUE' and id = ? ")
-                        .bind(0, status)
-                        .bind(1,getCurrentConfig().getId())
-                        .execute();
-                return null;
-            });
-            this.current_config.setStatus(status);
-        }catch (Exception e){
-            System.out.println("Error in update status");
-            e.printStackTrace();
 
-        }
-    }
 
-    public boolean checkConfigStatus(String status){
-        try {
-            boolean isStatusExists = getControlJDBI().withHandle(handle -> {
-                String sql = "SELECT COUNT(*) FROM configs WHERE status = ? and id = ?";
-                int count = handle.createQuery(sql)
-                        .bind(0, status)
-                        .bind(1,getCurrentConfig().getId())
-                        .mapTo(Integer.class)
-                        .one();
-                return count > 0;
-            });
-            if (isStatusExists) {
-                getCurrentConfig().setStatus(status);
-                return true;
-            }else{
-                return false;
-            }
 
-        } catch (Exception e) {
-            // Xử lý ngoại lệ (exception) tại đây
-            return false;
-        }
-    }
-    public void createLog(String name, String message, String level, String source, String note, String content){
-        getControlJDBI().withHandle(handle -> {
-            handle.createUpdate("INSERT INTO logs (name, message, level, source, note, content)\n" +
-                    "VALUES (?,?,?,?,?,?);").bind(0,name)
-                    .bind(1,message)
-                    .bind(2,level).bind(3,source)
-                    .bind(4,note).bind(5,content).execute();
-           return null;
-        });
-    }
-
-    public static void main(String[] args) {
-        ControlDAO c = new ControlDAO();
-        System.out.println(c.getCurrentConfig());
-    }
 }

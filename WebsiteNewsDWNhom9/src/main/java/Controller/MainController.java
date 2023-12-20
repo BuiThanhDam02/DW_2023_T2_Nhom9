@@ -18,6 +18,8 @@ public class MainController extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         MartDAO martDAO = new MartDAO();
         List<News> newsList = martDAO.get30News();
+
+        newsList = ImageService.autowiredImagePath(newsList);
         List<News> resultList = new ArrayList<>(newsList.subList(1, newsList.size()));
         News news = newsList.get(0);
         request.setAttribute("top1", news);

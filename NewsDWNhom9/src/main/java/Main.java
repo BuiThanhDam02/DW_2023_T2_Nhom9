@@ -2,6 +2,7 @@ import DAO.ControlDAO;
 import Flows.*;
 
 
+import Models.Status;
 import lombok.Data;
 
 
@@ -24,6 +25,7 @@ public class Main {
 
         try {
             ControlDAO controlDAO = new ControlDAO();
+//            if (controlDAO.checkConfigStatus(Status.LOADED.name())) controlDAO.setConfigStatus(Status.PREPARE.name());
             // Crawler
             CompletableFuture<Void> crawlerFuture = CompletableFuture.runAsync(() -> new Crawler(controlDAO).excute());
 

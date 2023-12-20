@@ -22,7 +22,7 @@
     </div>
     <div class="auto-group-nq9r-Aa4">
       <img class="group-6ic" src="./assets/group-AQ8.png"/>
-      <p class="news-cS4">News</p>
+      <a class="news-kjz" href="/mainController">News</a>
     </div>
   </div>
   <div class="main">

@@ -9,6 +9,7 @@ public class JDBIConnector {
 private  Jdbi jdbi;
 
     private  void makeConnect()   {
+        // Bước * Đọc thông tin kết nối dtb (db.properties)
         DatabaseControl dc =new DatabaseControl(new PropertiesConfig("db.properties"));
         MysqlDataSource dataSource = new MysqlDataSource();
         try {
@@ -22,6 +23,7 @@ private  Jdbi jdbi;
             e.printStackTrace();
             throw new RuntimeException(e);
         }
+        // Bước * Kết nối dtb control
         this.jdbi = Jdbi.create(dataSource);
 
     }

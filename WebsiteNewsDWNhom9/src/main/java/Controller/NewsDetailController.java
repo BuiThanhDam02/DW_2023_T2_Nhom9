@@ -18,6 +18,7 @@ public class NewsDetailController extends HttpServlet {
         System.out.println(id);
         MartDAO martDAO = new MartDAO();
         News newsDetail = martDAO.getDetailNews(id);
+        newsDetail = ImageService.autowiredImagePath(newsDetail);
         request.setAttribute("newsDetail", newsDetail);
         request.getRequestDispatcher("desktop-9.jsp").forward(request,response);
     }
